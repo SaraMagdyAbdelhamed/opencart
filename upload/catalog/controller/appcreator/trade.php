@@ -1239,4 +1239,48 @@ class Jsonobjects {
 
 }
 
+function change_password($conn, $db_prefix,$request)
+{
+$query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_token='".$request["api_token"]."'");
+    if ($query_token->num_rows > 0) 
+    {
+        $user_id=$query_token->fetch_assoc()['user_id'];
+         $query = $conn->query("UPDATE " . $db_prefix . "user SELECT viewed = viewed+1 WHERE product_id='$request[ID]'");
+    if ($query) {
+
+        $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array("user_id" => $user_id));
+            return json_encode($userdata);
+    }
+    return false;
+
+    }
+    else
+    {
+        $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("please login and try again!")), "content" => array());
+            return json_encode($userdata);
+    }
+}
+function logout($conn, $db_prefix,$request)
+{
+    $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_token='".$request["api_token"]."'");
+    if ($query_token->num_rows > 0) 
+    {
+        $user_id=$query_token->fetch_assoc()['user_id'];
+         $query = $conn->query("DELETE FROM " . $db_prefix . "api_tokens WHERE api_token = '" . $request["api_token"] . "' ");
+    if ($query) {
+
+        $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array("user_id" => $user_id));
+            return json_encode($userdata);
+    }
+    return false;
+
+    }
+    else
+    {
+        $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("please login and try again!")), "content" => array());
+            return json_encode($userdata);
+    }
+    
+}
+
 ?>

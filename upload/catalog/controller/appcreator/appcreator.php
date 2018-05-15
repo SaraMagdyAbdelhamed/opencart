@@ -73,6 +73,16 @@ switch($action) {
             $result=signin($conn,$db_prefix,$request);
             echo $result;exit;
     break;
+    case "60":
+            // http_response_code(200);
+            $result=change_password($conn,$db_prefix,$request);
+            echo $result;exit;
+    break;
+    case "61":
+            // http_response_code(200);
+            $result=logout($conn,$db_prefix,$request);
+            echo $result;exit;
+    break;
         case "22":
             $result=profile($conn,$db_prefix,$request);
             echo $result;exit;
