@@ -672,7 +672,7 @@ function signin($conn, $db_prefix,$request) {
             }
             // $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array("userID" => $user_id, "Img" => $img));
             // session_start();
-            // $_SESSION['userData'] = array("is_logged" => 1, "user_id" => $user_id);
+            $_SESSION['userData'] = array("is_logged" => 1, "user_id" => $user_id);
             // echo $_SESSION['userData']['is_logged'];
             // exit();
             // var_dump(http_response_code());die;
