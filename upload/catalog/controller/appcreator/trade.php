@@ -655,8 +655,8 @@ function signin($conn, $db_prefix,$request) {
     if (isset($request['Email']) && !empty($request['Email']) && isset($request['Pass']) && !empty($request['Pass']))
      {
         $email = $request['Email'];
-        $password = html_entity_decode($request['Pass'], ENT_QUOTES, "utf-8");
-        $sql = "SELECT * FROM " . $db_prefix . "user WHERE email = '" . $email . "' AND (password = SHA1(CONCAT(salt, SHA1(CONCAT(salt, SHA1('" . $password . "'))))) OR password = '" . md5($password) . "') AND status = '1'";
+        // $password = html_entity_decode($request['Pass'], ENT_QUOTES, "utf-8");
+        $sql = "SELECT * FROM " . $db_prefix . "user WHERE email = '" . $email . "' AND (password = SHA1(CONCAT(salt, SHA1(CONCAT(salt, SHA1('" . $request['Pass'] . "'))))) OR password = '" . md5($request['Pass']) . "') AND status = '1'";
         $query = $conn->query($sql);
         if ($query->num_rows == 1) {
             $token = "";
@@ -731,14 +731,13 @@ function signup($conn, $db_prefix,$request) {
         $data = array();
         $data['first_name'] = isset($request['first_name']) ? $request['first_name'] : "";
         $data['last_name'] = isset($request['last_name']) ? $request['last_name'] : "";
-        $check_user = check_user_exists($conn, $db_prefix, $request['User'], $request['e
-            mail']);
+        $check_user = check_user_exists($conn, $db_prefix, $request['User'], $request['email']);
         if ($check_user != "") {
             $userdata = array("status" => array("code"=>2,"message"=>"error","error_details"=>array("هذا المستخدم موجود بالفعل")), "content" => array());
             return json_encode($userdata);
-            exit;
+            // exit;
         }
-        $sql = "INSERT INTO `" . $db_prefix . "user` SET username = '" . $request['User'] . "', user_group_id = '10', salt = '" . $salt = token(9) . "', password = '" . sha1($salt . sha1($salt . sha1($request['Pass']))) . "', firstname = '" . $data['first_name'] . "', lastname = '" . $data['last_name'] . "', email = '" . $request['Mail'] . "', status = '1', date_added = NOW()";
+        $sql = "INSERT INTO `" . $db_prefix . "user` SET username = '" . $request['User'] . "', user_group_id = '10', salt = '" . $salt = token(9) . "', password = '" . sha1($salt . sha1($salt . sha1($request['Pass']))) . "', firstname = '" . $data['first_name'] . "', lastname = '" . $data['last_name'] . "', email = '" . $request['email'] . "', status = '1', date_added = NOW()";
         if (DB_DRIVER == 'mysqli') {
             $conn->query($sql);
             $user_id = $conn->insert_id;
@@ -763,7 +762,7 @@ function profile($conn, $db_prefix,$request) {
       // echo ($session);exit();
     // $userData = $_SESSION['userData'];
     $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_token='".$request["api_token"]."'");
-    if ($query_token->num_rows > 0) {
+    if ($query_token->num_rows == 1) {
         // return $query_token->fetch_assoc()['user_id'];
     //     while ($row=mysqli_fetch_row($query_token))
     // {
@@ -811,8 +810,10 @@ function profile($conn, $db_prefix,$request) {
 }
 
 function Shopping_cart($conn, $db_prefix,$request) {
-    $userData = $_SESSION['userData'];
-    if (isset($userData['is_logged']) && $userData['is_logged'] == 1) {
+    // $userData = $_SESSION['userData'];
+    // if (isset($userData['is_logged']) && $userData['is_logged'] == 1) {
+     $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_token='".$request["api_token"]."'");
+    if ($query_token->num_rows == 1) {
         $sql = "SELECT * FROM {$db_prefix}cart";
         $query = $conn->query($sql);
         if ($query) {
@@ -863,10 +864,12 @@ function Shopping_cart($conn, $db_prefix,$request) {
 }
 
 function Add_To_Shopping_Cart($conn, $db_prefix,$request) {
-    $userData = $_SESSION['userData'];
-    if (isset($userData['is_logged']) && $userData['is_logged'] == 1) {
-        $Add = isset($_GET['Add']) && is_numeric($_GET['Add']) ? $_GET['Add'] : "";
-        if (add_to_cart($conn, $db_prefix, $_GET['ID'], 1, array(), 0, $Add)) {
+    // $userData = $_SESSION['userData'];
+    // if (isset($userData['is_logged']) && $userData['is_logged'] == 1) {
+     $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_token='".$request["api_token"]."'");
+    if ($query_token->num_rows == 1) {
+        $Add = isset($request['Add']) && is_numeric($request['Add']) ? $request['Add'] : "";
+        if (add_to_cart($conn, $db_prefix, $request['ID'], 1, array(), 0, $Add)) {
             $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()),  "content" => array());
             return json_encode($userdata);
         } else {
@@ -880,9 +883,11 @@ function Add_To_Shopping_Cart($conn, $db_prefix,$request) {
 }
 
 function Remove_From_Shopping_Cart($conn, $db_prefix,$request) {
-    $userData = $_SESSION['userData'];
-    if (isset($userData['is_logged']) && $userData['is_logged'] == 1) {
-        if (remove_from_cart($conn, $db_prefix, $_GET['ID'])) {
+    // $userData = $_SESSION['userData'];
+    // if (isset($userData['is_logged']) && $userData['is_logged'] == 1) {
+     $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_token='".$request["api_token"]."'");
+    if ($query_token->num_rows == 1) {
+        if (remove_from_cart($conn, $db_prefix, $request['ID'])) {
             $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()),  "content" => array());
             return json_encode($userdata);
         } else {
@@ -900,6 +905,8 @@ function check_user_exists($conn, $db_prefix, $username = '', $mail = '') {
     $where2 = "email = '" . $mail . "'";
     $query = $conn->query("SELECT * FROM `" . $db_prefix . "user` WHERE $where1 OR $where2");
     if ($query->num_rows == 1) {
+        // echo $query->fetch_assoc()['user_id'];die;
+        // echo $query->num_rows;die;
         return array("num_rows" => $query->num_rows);
     } else {
         return "";
@@ -1148,11 +1155,13 @@ function output($result) {
     header('Content-Type: application/json; charset=utf-8');
     if (strstr($_SERVER['HTTP_USER_AGENT'], 'iPod') || strstr($_SERVER['HTTP_USER_AGENT'], 'iPhone') || strstr($_SERVER['HTTP_USER_AGENT'], 'iPad')) {
         foreach ($result as $key => $value) {
-            echo json_encode($value, 256);
+            $product = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array($value));
+            echo json_encode($product, 256);
             break;
         }
     } else {
-        echo json_encode($result, 256);
+        $product = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array($result));
+        echo json_encode($product, 256);
     }
     exit();
 }
@@ -1245,7 +1254,7 @@ $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_
     if ($query_token->num_rows > 0) 
     {
         $user_id=$query_token->fetch_assoc()['user_id'];
-         $query = $conn->query("UPDATE " . $db_prefix . "user SELECT viewed = viewed+1 WHERE product_id='$request[ID]'");
+         $query = $conn->query("UPDATE " . $db_prefix . "user SET  salt = '" . $salt = token(9) . "', password = '" . sha1($salt . sha1($salt . sha1($request['password']))) . "' WHERE user_id='".$user_id."'");
     if ($query) {
 
         $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array("user_id" => $user_id));
@@ -1281,6 +1290,42 @@ function logout($conn, $db_prefix,$request)
             return json_encode($userdata);
     }
     
+}
+
+
+function forget_password($conn,$db_prefix,$request)
+{
+return send_mail($request['email']);
+}
+
+function send_mail($email_to)
+{
+    
+$mail = new Mail();
+
+$mail->protocol = $this->config->get('config_mail_protocol');
+$mail->parameter = $this->config->get('config_mail_parameter');
+$mail->hostname = $this->config->get('config_smtp_host');
+$mail->username = $this->config->get('config_smtp_username');
+$mail->password = $this->config->get('config_smtp_password');
+$mail->port = $this->config->get('config_smtp_port');
+$mail->timeout = $this->config->get('config_smtp_timeout');            
+$mail->setTo($email_to);
+$mail->setFrom("info@avocatoapp.net");
+$mail->setSender("info@avocatoapp.net");
+$mail->setSubject("test send mail opencart");
+$mail->setText("welcome to opencart");
+
+if($mail->send())
+{
+    $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array());
+            return json_encode($userdata);
+}
+else
+{
+    $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("please error sending email")), "content" => array());
+     return json_encode($userdata);
+}
 }
 
 ?>

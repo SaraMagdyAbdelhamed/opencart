@@ -42,27 +42,34 @@ else
 switch($action) {
 	case "2":
 		//Products List (Search & Category)
-        Product_List_View($conn,$db_prefix,$request);
+        $result=Product_List_View($conn,$db_prefix,$request);
+        echo $result;exit;
 	break;
 	case "3":
-        Store_Depts($conn,$db_prefix,$request);
+        $result=Store_Depts($conn,$db_prefix,$request);
+        echo $result;exit;
     break;
 	case "6":
         $product_id = $request['ID'];
         if(is_nan($product_id)) exit();
-        Store_Display($conn,$db_prefix,$product_id,$request);
+        $result=Store_Display($conn,$db_prefix,$product_id,$request);
+        echo $result;exit;
     break;
 	case "7":
-        Store_Product($conn,$db_prefix,$request);
+        $result=Store_Product($conn,$db_prefix,$request);
+        echo $result;exit;
     break;
 	case "53":
-        Store_Shops($conn,$db_prefix,$request);
+        $result=Store_Shops($conn,$db_prefix,$request);
+        echo $result;exit;
     break;
     case "54":
-        Store_View($conn,$db_prefix,$request);
+        $result=Store_View($conn,$db_prefix,$request);
+        echo $result;exit;
     break;
 	case "63":
-        Store_Comment_List($conn,$db_prefix,$request);
+        $result=Store_Comment_List($conn,$db_prefix,$request);
+         echo $result;exit;
     break;
         case "64":
             $result=signup($conn,$db_prefix,$request);
@@ -81,6 +88,11 @@ switch($action) {
     case "61":
             // http_response_code(200);
             $result=logout($conn,$db_prefix,$request);
+            echo $result;exit;
+    break;
+     case "62":
+            // http_response_code(200);
+            $result=forget_password($conn,$db_prefix,$request);
             echo $result;exit;
     break;
         case "22":
