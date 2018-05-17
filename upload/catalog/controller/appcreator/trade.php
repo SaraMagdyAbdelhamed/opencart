@@ -774,7 +774,7 @@ function profile($conn, $db_prefix,$request) {
         if ($query) {
             // return 'h';
             while ($res = $query->fetch_assoc()) {
-                // return 'h';
+                 // return 'h';
                 $arr['ID'] = (string) $user_id;
                 $arr['Title'] = $res['firstname'] . " " . $res['lastname'];
                 $arr['Pic'] = $res['image'];
@@ -791,16 +791,16 @@ function profile($conn, $db_prefix,$request) {
 
                 $footerData_arr = array();
                 $footer_data = disp_footer_data($footerData_arr);
-
+                // return $footer_data;
                 $setting_data = disp_setting_data("0", "0", null, null, $arr['Key'], $arr['Api'], null, null, $footer_data);
-                
+                // return $setting_data;
                 foreach ($setting_data as $k => $v) {
                     $arr[$k] = $v;
                 }
-                // return $arr['Others_Data'];
-                $Arr_Json = $this->Json_CData($arr, $arr['Others_Data']);
+                 // return $arr;
+                $Arr_Json = Json_CData($arr, $arr['Others_Data']);
                 // return $Arr_Json;
-                $this->output($Arr_Json);
+                output($Arr_Json);
             }
         }
     } else {
