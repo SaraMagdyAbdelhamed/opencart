@@ -656,8 +656,10 @@ function signin($conn, $db_prefix,$request) {
      {
         $email = $request['Email'];
         // $password = html_entity_decode($request['Pass'], ENT_QUOTES, "utf-8");
-        $sql = "SELECT * FROM " . $db_prefix . "user WHERE email = '" . $email . "' AND (password = SHA1(CONCAT(salt, SHA1(CONCAT(salt, SHA1('" . $request['Pass'] . "'))))) OR password = '" . md5($request['Pass']) . "') AND status = '1'";
+        // return sha1($request['Pass']);
+        $sql = "SELECT * FROM " . $db_prefix . "user WHERE email = '" . $email ."' AND status=1 AND password= '".sha1($request['Pass'])."'";
         $query = $conn->query($sql);
+        // return $query->num_rows;
         if ($query->num_rows == 1) {
             $token = "";
             $user_pass = "";
@@ -714,7 +716,7 @@ function signin($conn, $db_prefix,$request) {
             return json_encode($userdata);
         } 
         else {
-            $userdata = array("status" => array("code"=>202,"message"=>"No Content","error_details"=>array("no data found")), "content" => array());
+            $userdata = array("status" => array("code"=>204,"message"=>"No Content","error_details"=>array("no data found")), "content" => array());
             return json_encode($userdata);
         }
 
@@ -737,7 +739,7 @@ function signup($conn, $db_prefix,$request) {
             return json_encode($userdata);
             // exit;
         }
-        $sql = "INSERT INTO `" . $db_prefix . "user` SET username = '" . $request['User'] . "', user_group_id = '10', salt = '" . $salt = token(9) . "', password = '" . sha1($salt . sha1($salt . sha1($request['Pass']))) . "', firstname = '" . $data['first_name'] . "', lastname = '" . $data['last_name'] . "', email = '" . $request['email'] . "', status = '1', date_added = NOW()";
+        $sql = "INSERT INTO `" . $db_prefix . "user` SET username = '" . $request['User'] . "', user_group_id = '10', salt = '" . $salt = token(9) . "', password = '" . sha1($request['Pass']) . "', firstname = '" . $data['first_name'] . "', lastname = '" . $data['last_name'] . "', email = '" . $request['email'] . "', status = '1', date_added = NOW()";
         if (DB_DRIVER == 'mysqli') {
             $conn->query($sql);
             $user_id = $conn->insert_id;
@@ -1376,5 +1378,6 @@ function Product_Action($conn, $db_prefix,$request)
     }
 
 }
+
 
 ?>
