@@ -868,8 +868,19 @@ function Add_To_Shopping_Cart($conn, $db_prefix,$request) {
     // if (isset($userData['is_logged']) && $userData['is_logged'] == 1) {
      $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_token='".$request["api_token"]."'");
     if ($query_token->num_rows == 1) {
+        $user_id=$query_token->fetch_assoc()['user_id'];
         $Add = isset($request['Add']) && is_numeric($request['Add']) ? $request['Add'] : "";
         if (add_to_cart($conn, $db_prefix, $request['ID'], 1, array(), 0, $Add)) {
+            if(isset($request['action_id']) && !empty($request['action_id']) && isset($request['product_id']) && !empty($request['product_id']))
+        {
+            $query_actions = $conn->query("INSERT INTO ". $db_prefix ."users_actions SET product_id='".$request["product_id"]."', action_id='".$request["action_id"]."' , user_id='".$user_id."'");
+        }
+        else
+        {
+
+            $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("action id and product id required")), "content" => array());
+                return json_encode($userdata);
+        }
             $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()),  "content" => array());
             return json_encode($userdata);
         } else {
@@ -1018,13 +1029,13 @@ function Json_Arr_Setting($Target_Action_ID, $Target_Layout_ID, $Havesub, $Api, 
 
 function Json_Basic_Data($ID, $Title, $Des, $Pic, $Link_Share, $DateTime, $Links, $ArrImg = array(), $ArrVideo = array(), $Value = 0) {
 
-    $Arr['ID'] = "$ID";
-    $Arr['Title'] = "$Title";
-    $Arr['Des'] = "$Des";
-    $Arr['Pic'] = "$Pic";
+    $Arr['id'] = "$ID";
+    $Arr['name'] = "$Title";
+    $Arr['description'] = "$Des";
+    $Arr['image'] = "$Pic";
     $Arr['Key'] = "$Value";
     $Arr['Link_Share'] = "$Link_Share";
-    $Arr['DateTime'] = "$DateTime";
+    $Arr['created_at'] = "$DateTime";
     $Arr['Links'] = "$Links";
     if (count($ArrImg) == 0)
         $ArrImg = array();
@@ -1063,7 +1074,7 @@ function Json_Action_Creat($Arr_Basc_Data, $Arr_Advanced_Data = array(), $Arr_Se
     $Arr['Advanced_Data'] = $Arr_Advanced_Data;
     $Arr['Setting_Data'] = $Arr_Setting_Data;
     $Arr['Stat_Data'] = $Arr_Stat_Data;
-    $Arr['Others_Data'] = $Arr_Others_Data;
+    $Arr['more'] = $Arr_Others_Data;
     $Arr['Key_Value'] = $Key_Value;
     return $Arr;
 }
@@ -1326,6 +1337,44 @@ else
     $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("please error sending email")), "content" => array());
      return json_encode($userdata);
 }
+}
+
+function Product_Action($conn, $db_prefix,$request)
+{
+    $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_token='".$request["api_token"]."'");
+    if ($query_token->num_rows > 0) 
+    {
+        $user_id=$query_token->fetch_assoc()['user_id'];
+        if(isset($request['action_id']) && !empty($request['action_id']) && isset($request['product_id']) && !empty($request['product_id']))
+        {
+           $query = $conn->query("INSERT INTO ". $db_prefix ."push_notifications_from_api SET product_id='".$request["product_id"]."', action_id='".$request["action_id"]."' , user_id='".$user_id."'");
+           $query_actions = $conn->query("INSERT INTO ". $db_prefix ."users_actions SET product_id='".$request["product_id"]."', action_id='".$request["action_id"]."' , user_id='".$user_id."'");
+            if($query)
+            { 
+                $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array("user_id" => $user_id));
+                return json_encode($userdata);
+            }
+            else
+            {
+               $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("error while insert data")), "content" => array());
+                return json_encode($userdata);
+            } 
+        }
+        else
+        {
+            $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("action id and product id required")), "content" => array());
+                return json_encode($userdata);
+        }
+        
+
+
+    }
+    else
+    {
+        $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("product id and action id are required")), "content" => array());
+            return json_encode($userdata);
+    }
+
 }
 
 ?>

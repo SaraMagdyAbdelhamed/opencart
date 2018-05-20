@@ -49,6 +49,10 @@ switch($action) {
         $result=Store_Depts($conn,$db_prefix,$request);
         echo $result;exit;
     break;
+    case "4":
+        $result=Product_Action($conn,$db_prefix,$request);
+        echo $result;exit;
+    break;
 	case "6":
         $product_id = $request['ID'];
         if(is_nan($product_id)) exit();
