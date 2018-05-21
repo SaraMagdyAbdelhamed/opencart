@@ -271,9 +271,11 @@ class ControllerCheckoutCart extends Controller {
 		}
 
 		$this->load->model('catalog/product');
-
+		$this->load->model('notification/push');
+		$this->load->model('notification/action');
 		$product_info = $this->model_catalog_product->getProduct($product_id);
-
+		$notification_push = $this->model_notification_push->addNotification($product_id,5,1);
+		$add_action = $this->model_notification_action->addAction($product_id,5,1);
 		if ($product_info) {
 			if (isset($this->request->post['quantity'])) {
 				$quantity = (int)$this->request->post['quantity'];
