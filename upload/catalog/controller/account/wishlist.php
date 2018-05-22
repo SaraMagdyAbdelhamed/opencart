@@ -125,6 +125,7 @@ class ControllerAccountWishList extends Controller {
 		}
 
 		$this->load->model('catalog/product');
+		$this->load->model('notification/action');
 
 		$product_info = $this->model_catalog_product->getProduct($product_id);
 
@@ -134,7 +135,7 @@ class ControllerAccountWishList extends Controller {
 				$this->load->model('account/wishlist');
 
 				$this->model_account_wishlist->addWishlist($this->request->post['product_id']);
-
+				$add_action = $this->model_notification_action->addAction($product_id,9,$this->session->data['customer_id']);
 				$json['success'] = sprintf($this->language->get('text_success'), $this->url->link('product/product', 'product_id=' . (int)$this->request->post['product_id']), $product_info['name'], $this->url->link('account/wishlist'));
 
 				$json['total'] = sprintf($this->language->get('text_wishlist'), $this->model_account_wishlist->getTotalWishlist());

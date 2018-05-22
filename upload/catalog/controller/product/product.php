@@ -233,8 +233,8 @@ class ControllerProductProduct extends Controller {
 			$this->load->model('catalog/review');
 			$this->load->model('notification/action');
 			$this->load->model('notification/push');
-			$notification_push = $this->model_notification_push->addNotification($product_id,2,1);
-			$add_action = $this->model_notification_action->addAction($product_id,2,1);
+			$notification_push = $this->model_notification_push->addNotification($product_id,2,$this->session->data['customer_id']);
+			$add_action = $this->model_notification_action->addAction($product_id,2,$this->session->data['customer_id']);
 
 			$data['tab_review'] = sprintf($this->language->get('tab_review'), $product_info['reviews']);
 
@@ -365,7 +365,7 @@ class ControllerProductProduct extends Controller {
 
 			$data['reviews'] = sprintf($this->language->get('text_reviews'), (int)$product_info['reviews']);
 			$data['rating'] = (int)$product_info['rating'];
-			$add_action = $this->model_notification_action->addAction($product_id,8,1);
+			$add_action = $this->model_notification_action->addAction($product_id,8,$this->session->data['customer_id']);
 
 			// Captcha
 			if ($this->config->get('captcha_' . $this->config->get('config_captcha') . '_status') && in_array('review', (array)$this->config->get('config_captcha_page'))) {

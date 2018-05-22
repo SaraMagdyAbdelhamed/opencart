@@ -207,11 +207,14 @@ class ControllerCheckoutConfirm extends Controller {
 			}
 
 			$order_data['products'] = array();
-
+			$this->load->model('notification/push');
 			foreach ($this->cart->getProducts() as $product) {
 				$option_data = array();
+				// print_r($product);
+				$this->model_notification_push->addNotification($product['product_id'],3,$this->session->data['customer_id']);
 
 				foreach ($product['option'] as $option) {
+
 					$option_data[] = array(
 						'product_option_id'       => $option['product_option_id'],
 						'product_option_value_id' => $option['product_option_value_id'],
