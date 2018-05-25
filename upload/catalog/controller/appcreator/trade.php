@@ -652,12 +652,13 @@ function Store_Comment_List($conn, $db_prefix,$request) {
 function signin($conn, $db_prefix,$request) {
     // var_dump($request['Pass']);exit;
     // $validator = new Validator;
-    if (isset($request['Email']) && !empty($request['Email']) && isset($request['Pass']) && !empty($request['Pass']))
+    if (isset($request['email']) && !empty($request['email']) && isset($request['password']) && !empty($request['password']))
      {
-        $email = $request['Email'];
+        $email = $request['email'];
         // $password = html_entity_decode($request['Pass'], ENT_QUOTES, "utf-8");
         // return sha1($request['Pass']);
-        $sql = "SELECT * FROM " . $db_prefix . "user WHERE email = '" . $email ."' AND status=1 AND password= '".sha1($request['Pass'])."'";
+        // $sql = "SELECT * FROM " . $db_prefix . "user WHERE email = '" . $email ."' AND status=1 AND password= '".sha1($request['Pass'])."'";
+        $sql = "SELECT * FROM " . $db_prefix . "customer WHERE email = '" . $email ."' AND status=1 AND password= sha1(salt . sha1(salt . sha1('".$request['password']."')))";
         $query = $conn->query($sql);
         // return $query->num_rows;
         if ($query->num_rows == 1) {
@@ -728,18 +729,19 @@ function signin($conn, $db_prefix,$request) {
 }
 
 function signup($conn, $db_prefix,$request) {
-    if (isset($request['User']) && !empty($request['User']) && isset($request['Pass']) && !empty($request['Pass'])) {
+    if (isset($request['email']) && !empty($request['email']) && isset($request['password']) && !empty($request['password'])) {
         $userdata = array();
         $data = array();
-        $data['first_name'] = isset($request['first_name']) ? $request['first_name'] : "";
-        $data['last_name'] = isset($request['last_name']) ? $request['last_name'] : "";
-        $check_user = check_user_exists($conn, $db_prefix, $request['User'], $request['email']);
+        $data['firstname'] = isset($request['first_name']) ? $request['first_name'] : "";
+        $data['lastname'] = isset($request['last_name']) ? $request['last_name'] : "";
+        $check_user = check_user_exists($conn, $db_prefix, $request['email']);
         if ($check_user != "") {
             $userdata = array("status" => array("code"=>2,"message"=>"error","error_details"=>array("هذا المستخدم موجود بالفعل")), "content" => array());
             return json_encode($userdata);
             // exit;
         }
-        $sql = "INSERT INTO `" . $db_prefix . "user` SET username = '" . $request['User'] . "', user_group_id = '10', salt = '" . $salt = token(9) . "', password = '" . sha1($request['Pass']) . "', firstname = '" . $data['first_name'] . "', lastname = '" . $data['last_name'] . "', email = '" . $request['email'] . "', status = '1', date_added = NOW()";
+        // $sql = "INSERT INTO `" . $db_prefix . "user` SET username = '" . $request['User'] . "', user_group_id = '10', salt = '" . $salt = token(9) . "', password = '" . sha1($request['Pass']) . "', firstname = '" . $data['first_name'] . "', lastname = '" . $data['last_name'] . "', email = '" . $request['email'] . "', status = '1', date_added = NOW()";
+        $sql="INSERT INTO " . $db_prefix . "customer SET customer_group_id = '" .$requset['customer_group_id'] . "', store_id = '" . $request['config_store_id'] . "', language_id = '" . $request['language_id'] . "', firstname = '" . $data['firstname'] . "', lastname = '" . $data['lastname'] . "', email = '" . $request['email'] . "', telephone = '" . $request['telephone'] . "',  salt = '" . $salt = token(9) . "', password = '" .sha1($salt . sha1($salt . sha1($request['password']))) . "', status = '1', date_added = NOW()";
         if (DB_DRIVER == 'mysqli') {
             $conn->query($sql);
             $user_id = $conn->insert_id;
@@ -751,7 +753,7 @@ function signup($conn, $db_prefix,$request) {
        
         
 
-    $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array("user_id" => $user_id, "Img" => ""));
+    $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array("user_id" => $user_id, "email" => ""));
         return json_encode($userdata);
     } else {
         $userdata = array("status" => array("code"=>2,"message"=>"Error!","error_details"=>array("تسجيل المستخدم خاطئ")), "content" => array());
@@ -913,10 +915,11 @@ function Remove_From_Shopping_Cart($conn, $db_prefix,$request) {
     }
 }
 
-function check_user_exists($conn, $db_prefix, $username = '', $mail = '') {
-    $where1 = "username = '" . $username . "'";
+function check_user_exists($conn, $db_prefix, $mail = '') {
+    // $where1 = "username = '" . $username . "'";
     $where2 = "email = '" . $mail . "'";
-    $query = $conn->query("SELECT * FROM `" . $db_prefix . "user` WHERE $where1 OR $where2");
+    // $query = $conn->query("SELECT * FROM `" . $db_prefix . "user` WHERE $where1 OR $where2");
+    $query = $conn->query("SELECT * FROM `" . $db_prefix . "customer` WHERE $where2");
     if ($query->num_rows == 1) {
         // echo $query->fetch_assoc()['user_id'];die;
         // echo $query->num_rows;die;
