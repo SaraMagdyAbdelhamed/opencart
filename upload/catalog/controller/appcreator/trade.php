@@ -655,13 +655,23 @@ function signin($conn, $db_prefix,$request) {
     if (isset($request['email']) && !empty($request['email']) && isset($request['password']) && !empty($request['password']))
      {
         $email = $request['email'];
-        // $password = html_entity_decode($request['Pass'], ENT_QUOTES, "utf-8");
-        // return sha1($request['Pass']);
+        // $password = $request['password'];
+         // $salt="MBq9nRUFO";
+         // return sha1($salt . sha1($salt . sha1($request['password'])));
+         $password = html_entity_decode($request['password'], ENT_QUOTES, "utf-8");
+         // return md5($password);
         // $sql = "SELECT * FROM " . $db_prefix . "user WHERE email = '" . $email ."' AND status=1 AND password= '".sha1($request['Pass'])."'";
-        $sql = "SELECT * FROM " . $db_prefix . "customer WHERE email = '" . $email ."' AND status=1 AND password= sha1(salt . sha1(salt . sha1('".$request['password']."')))";
+        /*$sql = "SELECT * FROM " . $db_prefix . "customer WHERE email = '" . $email ."' AND status=1 AND (password = SHA1(CONCAT(salt, SHA1(CONCAT(salt, SHA1('" . $password . "'))))) OR password = '" . md5($password) . "')";*/
+        $sql = "SELECT * FROM " . $db_prefix . "customer WHERE email = '" . $email ."' AND status=1";
+
         $query = $conn->query($sql);
+        $q=$query->fetch_assoc();
+        // $salt = $q['salt'];
+        // die($salt);
+        $check_pass =password_verify (  $password, $q['password'] );
+        // var_dump($check_pass);die;
         // return $query->num_rows;
-        if ($query->num_rows == 1) {
+        if ($check_pass) {
             $token = "";
             $user_pass = "";
             $img = "";
@@ -741,10 +751,11 @@ function signup($conn, $db_prefix,$request) {
             // exit;
         }
         // $sql = "INSERT INTO `" . $db_prefix . "user` SET username = '" . $request['User'] . "', user_group_id = '10', salt = '" . $salt = token(9) . "', password = '" . sha1($request['Pass']) . "', firstname = '" . $data['first_name'] . "', lastname = '" . $data['last_name'] . "', email = '" . $request['email'] . "', status = '1', date_added = NOW()";
-        $sql="INSERT INTO " . $db_prefix . "customer SET customer_group_id = '" .$requset['customer_group_id'] . "', store_id = '" . $request['config_store_id'] . "', language_id = '" . $request['language_id'] . "', firstname = '" . $data['firstname'] . "', lastname = '" . $data['lastname'] . "', email = '" . $request['email'] . "', telephone = '" . $request['telephone'] . "',  salt = '" . $salt = token(9) . "', password = '" .sha1($salt . sha1($salt . sha1($request['password']))) . "', status = '1', date_added = NOW()";
+        $sql="INSERT INTO " . $db_prefix . "customer SET customer_group_id = '" .$requset['customer_group_id'] . "', store_id = '" . $request['config_store_id'] . "', language_id = '" . $request['language_id'] . "', firstname = '" . $data['firstname'] . "', lastname = '" . $data['lastname'] . "', email = '" . $request['email'] . "', telephone = '" . $request['telephone'] . "',  salt = '" . $salt = token(9) . "', password = '"  . crypt($request['password']) . "', status = '1', date_added = NOW()";
         if (DB_DRIVER == 'mysqli') {
             $conn->query($sql);
             $user_id = $conn->insert_id;
+            // return sha1($salt . sha1($salt . sha1($request['password'])));
         } else {
             mysql_query($sql);
             $user_id = mysql_insert_id();
@@ -774,18 +785,19 @@ function profile($conn, $db_prefix,$request) {
     // }
         // return mysql_insert_id();
         $user_id=$query_token->fetch_assoc()['user_id'];
-        $query = $conn->query("SELECT * FROM ". $db_prefix ."user WHERE user_id='".$user_id."'");
+        // $query = $conn->query("SELECT * FROM ". $db_prefix ."user WHERE user_id='".$user_id."'");
+        $query = $conn->query("SELECT * FROM ". $db_prefix ."customer WHERE customer_id='".$user_id."'");
         if ($query) {
             // return 'h';
             while ($res = $query->fetch_assoc()) {
                  // return 'h';
                 $arr['ID'] = (string) $user_id;
                 $arr['Title'] = $res['firstname'] . " " . $res['lastname'];
-                $arr['Pic'] = $res['image'];
+                $arr['mobile'] = $res['telephone'];
                 $arr['Key'] = "ID";
                 $arr['Api'] = "&ID=" . $arr['ID'];
 
-                $user = ["ID" => $arr['ID'], "Title" => $arr['Title'], "Img" => $res['image']];
+                $user = ["ID" => $arr['ID'], "Title" => $arr['Title'], "mobile" => $res['telephone']];
 
                 $adv_data = disp_advanced_data(null, null, null, null, $user);
                 // return $adv_data;

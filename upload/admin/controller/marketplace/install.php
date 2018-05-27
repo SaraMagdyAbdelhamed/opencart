@@ -139,6 +139,7 @@ class ControllerMarketplaceInstall extends Controller {
 					'system/config/',
 					'system/library/',
 					'image/catalog/',
+					'catalog/controller/restapi',
 
 				);
 	
