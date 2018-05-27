@@ -927,6 +927,21 @@ function Remove_From_Shopping_Cart($conn, $db_prefix,$request) {
     }
 }
 
+//////get stores
+function get_stores($conn,$db_prefix,$request)
+{
+    $query = $conn->query("SELECT * FROM `" . $db_prefix . "store`");
+    if ($query->num_rows == 1) {
+        // echo $query->fetch_assoc()['user_id'];die;
+        // echo $query->num_rows;die;
+        $stores= array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array("stores" => $query->fetch_assoc()));
+        return json_encode($stores);
+    } else {
+        $stores = array("status" => array("code"=>204,"message"=>"No Content","error_details"=>array("no data found")), "content" => array());
+            return json_encode($stores);
+    }
+}
+
 function check_user_exists($conn, $db_prefix, $mail = '') {
     // $where1 = "username = '" . $username . "'";
     $where2 = "email = '" . $mail . "'";
