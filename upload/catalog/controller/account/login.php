@@ -4,7 +4,7 @@ class ControllerAccountLogin extends Controller {
 
 	public function index() {
 		$this->load->model('account/customer');
-
+		
 		// Login override for admin users
 		if (!empty($this->request->get['token'])) {
 			$this->customer->logout();

@@ -39,6 +39,7 @@ else
 	$conn = mysql_connect($db_host,$db_user,$db_pass,$db_name);
         mysql_query("SET NAMES 'utf8'");
 }
+
 switch($action) {
 	case "2":
 		//Products List (Search & Category)

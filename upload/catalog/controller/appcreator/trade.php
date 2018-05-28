@@ -1,5 +1,5 @@
 <?php
-
+// require_once '../upload/model/account/cutomer.php';
 function json_encode_convert($outputs, $Key = "") {
     if (strstr($_SERVER['HTTP_USER_AGENT'], 'iPod') || strstr($_SERVER['HTTP_USER_AGENT'], 'iPhone') || strstr($_SERVER['HTTP_USER_AGENT'], 'iPad')) {
         return json_encode($outputs);
@@ -37,16 +37,17 @@ function Product_List_View($conn, $db_prefix,$request) {
     $out = array();
     $temp = array();
     $Final_Json = array();
-    foreach ($Product_List as $product) {
-        $temp['ID'] = $product['ID'];
-        $temp['Title'] = $product['Title'];
+    foreach ($Product_List as $product) 
+    {
+        $temp['id'] = $product['ID'];
+        $temp['name'] = $product['Title'];
         $image = HTTP_SERVER . "image/$product[Img]";
-        $temp['Pic'] = $image;
-        $temp['Des'] = limit_string(strip_tags($product['Description']), 200);
-        $temp['Price'] = $product['Price'];
+        $temp['image'] = $image;
+        $temp['description'] = limit_string(strip_tags($product['Description']), 200);
+        $temp['order'] = $product['Price'];
         $temp['Expire_In'] = ($product['Expire_In'] ? $product['Expire_In'] : "");
-        $temp['Num_Visit'] = $product['viewed'];
-        $temp['Link_Share'] = HTTP_SERVER . "index.php?route=product/product&product_id=" . $product['ID'];
+        $temp['visit_num'] = $product['viewed'];
+        $temp['link_share'] = HTTP_SERVER . "index.php?route=product/product&product_id=" . $product['ID'];
         $q = "SELECT count(review_id) as 'c' FROM " . $db_prefix . "review WHERE product_id = '$product[ID]'";
         if (DB_DRIVER == 'mysqli') {
             $comments_count = $conn->query($q);
@@ -117,16 +118,16 @@ function Product_List_View($conn, $db_prefix,$request) {
             $temp["Color"] = "";
         }
 
-        $adv_data = disp_advanced_data();
-        foreach ($adv_data as $k => $v) {
-            $temp[$k] = $v;
-        }
-        $footerData_arr = array();
-        $footer_data = disp_footer_data($footerData_arr);
-        $setting_data = disp_setting_data("0", "0", null, null, $temp['Key'], $temp['Api'], null, $temp['Color'], $footer_data);
-        foreach ($setting_data as $k => $v) {
-            $temp[$k] = $v;
-        }
+        // $adv_data = disp_advanced_data();
+        // foreach ($adv_data as $k => $v) {
+        //     $temp[$k] = $v;
+        // }
+        // $footerData_arr = array();
+        // $footer_data = disp_footer_data($footerData_arr);
+        // $setting_data = disp_setting_data("0", "0", null, null, $temp['Key'], $temp['Api'], null, $temp['Color'], $footer_data);
+        // foreach ($setting_data as $k => $v) {
+        //     $temp[$k] = $v;
+        // }
 
         $Arr_Json = Json_CData($temp);
         $Final_Json[] = $Arr_Json;
@@ -159,11 +160,11 @@ function Store_Depts($conn, $db_prefix,$request) {
     $Final_Json = array();
     $temp = array();
     foreach ($Product_List as $product) {
-        $temp['ID'] = $product['ID'];
-        $temp['Title'] = $product['Title'];
-        $temp['Pic'] = ($product['Pic'] ? HTTP_SERVER . "/image/" . $product['Pic'] : "");
-        $temp['Visit_Num'] = 0;
-        $temp['Des'] = limit_string(strip_tags($product['Des']), 100);
+        $temp['id'] = $product['ID'];
+        $temp['name'] = $product['Title'];
+        $temp['image'] = ($product['Pic'] ? HTTP_SERVER . "/image/" . $product['Pic'] : "");
+        $temp['visit_num'] = 0;
+        $temp['description'] = limit_string(strip_tags($product['Des']), 100);
         $temp['Key'] = "ID";
         $temp['Api'] = "&ID=" . $temp['ID'];
         $q = "SELECT category_id FROM " . $db_prefix . "category WHERE parent_id = " . $product['ID'] . " LIMIT 0,1";
@@ -175,17 +176,17 @@ function Store_Depts($conn, $db_prefix,$request) {
             $c = mysql_num_rows($have);
         }
         $temp['Havesub'] = ($c ? 1 : 0);
-        $temp['Link_Share'] = HTTP_SERVER . "/index.php?route=product/category&path=" . $product['ID'];
-        $adv_data = disp_advanced_data();
-        foreach ($adv_data as $k => $v) {
-            $temp[$k] = $v;
-        }
-        $footerData_arr = array();
-        $footer_data = disp_footer_data($footerData_arr);
-        $setting_data = disp_setting_data("0", "0", null, null, $temp['Key'], $temp['Api'], null, null, $footer_data);
-        foreach ($setting_data as $k => $v) {
-            $temp[$k] = $v;
-        }
+        $temp['link_share'] = HTTP_SERVER . "/index.php?route=product/category&path=" . $product['ID'];
+        // $adv_data = disp_advanced_data();
+        // foreach ($adv_data as $k => $v) {
+        //     $temp[$k] = $v;
+        // }
+        // $footerData_arr = array();
+        // $footer_data = disp_footer_data($footerData_arr);
+        // $setting_data = disp_setting_data("0", "0", null, null, $temp['Key'], $temp['Api'], null, null, $footer_data);
+        // foreach ($setting_data as $k => $v) {
+        //     $temp[$k] = $v;
+        // }
         $Arr_Json = Json_CData($temp);
         $Final_Json[] = $Arr_Json;
     }
@@ -216,7 +217,7 @@ function Store_Display($conn, $db_prefix, $product_id,$request) {
     }
     $out = array();
     $temp = array();
-    $temp['ID'] = $Product_List['ID'];
+    $temp['id'] = $Product_List['ID'];
     $temp['User_ID'] = 1;
     $temp['User_Title'] = "Administrator";
     $q = "SELECT category_id as 'Depts_ID',name as 'Dept_Title' FROM " . $db_prefix . "category_description WHERE category_id = (SELECT category_id FROM " . $db_prefix . "product_to_category WHERE product_id = " . $request['ID'] . " LIMIT 0,1) LIMIT 0,1";
@@ -264,9 +265,9 @@ function Store_Display($conn, $db_prefix, $product_id,$request) {
         $im_arr[] = $arr;
     }
     $temp['Images'] = $im_arr;
-    $temp['Des'] = limit_string($Product_List['Description'], 200);
-    $temp['Link_Share'] = HTTP_SERVER . "index.php?route=product/category&path=" . $Product_List['ID'];
-    $temp['Price'] = $Product_List['Price'];
+    $temp['description'] = limit_string($Product_List['Description'], 200);
+    $temp['link_share'] = HTTP_SERVER . "index.php?route=product/category&path=" . $Product_List['ID'];
+    $temp['order'] = $Product_List['Price'];
     $temp['Expire_In'] = ($Product_List['Expire_In'] ? $Product_List['Expire_In'] : "");
     $temp['Hits'] = $Product_List['viewed'];
     $q = "SELECT count(review_id) as 'c' FROM " . $db_prefix . "review WHERE product_id = '$Product_List[ID]'";
@@ -301,22 +302,23 @@ function Store_Display($conn, $db_prefix, $product_id,$request) {
     }
     $dept = ["ID" => $temp['Depts_ID'], "Title" => $temp['Dept_Title'], "Img" => ""];
     $shop = ["ID" => $temp['Shop_ID'], "Title" => $temp['Shop_Title'], "Img" => ""];
-    $adv_data = disp_advanced_data($dept, null, $shop);
-    foreach ($adv_data as $k => $v) {
-        $temp[$k] = $v;
-    }
-    $footerData_arr = array();
-    $footer_data = disp_footer_data($footerData_arr);
-    $setting_data = disp_setting_data("0", "0", null, null, $temp['Key'], $temp['Api'], null, $temp['Color'], $footer_data);
-    foreach ($setting_data as $k => $v) {
-        $temp[$k] = $v;
-    }
+    // $adv_data = disp_advanced_data($dept, null, $shop);
+    // foreach ($adv_data as $k => $v) {
+    //     $temp[$k] = $v;
+    // }
+    // $footerData_arr = array();
+    // $footer_data = disp_footer_data($footerData_arr);
+    // $setting_data = disp_setting_data("0", "0", null, null, $temp['Key'], $temp['Api'], null, $temp['Color'], $footer_data);
+    // foreach ($setting_data as $k => $v) {
+    //     $temp[$k] = $v;
+    // }
 
     $phone = checkProductAttrExist(getProductAttributes($conn, $db_prefix, $Product_List['ID']), "phone");
     $latitude = checkProductAttrExist(getProductAttributes($conn, $db_prefix, $Product_List['ID']), "latitude");
     $longitude = checkProductAttrExist(getProductAttributes($conn, $db_prefix, $Product_List['ID']), "longitude");
     $Others_Data['Product_Display'] = array("Price" => number_format($Product_List['Price'], 2), "Hits" => $Product_List['viewed'], "Comment_Hits" => $c['c'], "Latitude" => $latitude, "Longitude" => $longitude, "URL" => $temp['Link_Share'], "Phone1" => $phone, "Phone2" => "", "Address" => $Product_List['Location'], "Discount" => "");
     $Others_Data['Form_Choice']['Form'] = array();
+
     $Arr_Json = Json_CData($temp, $Others_Data, $temp['Data']);
     output($Arr_Json);
 }
@@ -347,8 +349,8 @@ function Store_Product($conn, $db_prefix,$request) {
         $temp['ID'] = $product['ID'];
         $temp['Title'] = $product['Title'];
         $image = HTTP_SERVER . "/image/$product[Img]";
-        $temp['Pic'] = $image;
-        $temp['Des'] = limit_string($product['Description'], 200);
+        $temp['image'] = $image;
+        $temp['description'] = limit_string($product['Description'], 200);
         $temp['Price'] = $product['Price'];
         $temp['Expire_In'] = ($product['Expire_In'] ? $product['Expire_In'] : "");
         $temp['Num_Visit'] = $product['viewed'];
@@ -412,16 +414,16 @@ function Store_Product($conn, $db_prefix,$request) {
             $map = "";
         }
 
-        $adv_data = disp_advanced_data();
-        foreach ($adv_data as $k => $v) {
-            $temp[$k] = $v;
-        }
-        $footerData_arr = array();
-        $footer_data = disp_footer_data($footerData_arr);
-        $setting_data = disp_setting_data("0", "0", null, null, $temp['Key'], $temp['Api'], null, null, $footer_data);
-        foreach ($setting_data as $k => $v) {
-            $temp[$k] = $v;
-        }
+        // $adv_data = disp_advanced_data();
+        // foreach ($adv_data as $k => $v) {
+        //     $temp[$k] = $v;
+        // }
+        // $footerData_arr = array();
+        // $footer_data = disp_footer_data($footerData_arr);
+        // $setting_data = disp_setting_data("0", "0", null, null, $temp['Key'], $temp['Api'], null, null, $footer_data);
+        // foreach ($setting_data as $k => $v) {
+        //     $temp[$k] = $v;
+        // }
 
         //$out[] = $temp;
         $Others_Data['Content'] = $temp['Des'];
@@ -461,16 +463,16 @@ function Store_Shops($conn, $db_prefix,$request) {
         $temp['Key'] = "ID";
         $temp['Api'] = "&ID=" . $product['store_id'];
 
-        $adv_data = disp_advanced_data();
-        foreach ($adv_data as $k => $v) {
-            $temp[$k] = $v;
-        }
-        $footerData_arr = array();
-        $footer_data = disp_footer_data($footerData_arr);
-        $setting_data = disp_setting_data("0", "0", null, null, $temp['Key'], $temp['Api'], null, null, $footer_data);
-        foreach ($setting_data as $k => $v) {
-            $temp[$k] = $v;
-        }
+        // $adv_data = disp_advanced_data();
+        // foreach ($adv_data as $k => $v) {
+        //     $temp[$k] = $v;
+        // }
+        // $footerData_arr = array();
+        // $footer_data = disp_footer_data($footerData_arr);
+        // $setting_data = disp_setting_data("0", "0", null, null, $temp['Key'], $temp['Api'], null, null, $footer_data);
+        // foreach ($setting_data as $k => $v) {
+        //     $temp[$k] = $v;
+        // }
 
         $shop_owner = getSetting($conn, $db_prefix, $product['store_id'], "config_owner");
         $shop_tel = getSetting($conn, $db_prefix, $product['store_id'], "config_telephone");
@@ -576,16 +578,16 @@ function Store_View($conn, $db_prefix,$request) {
         }
         $temp['Data'] = $t;
 
-        $adv_data = disp_advanced_data();
-        foreach ($adv_data as $k => $v) {
-            $temp[$k] = $v;
-        }
-        $footerData_arr = array();
-        $footer_data = disp_footer_data($footerData_arr);
-        $setting_data = disp_setting_data("0", "0", null, null, $temp['Key'], $temp['Api'], null, null, $footer_data);
-        foreach ($setting_data as $k => $v) {
-            $temp[$k] = $v;
-        }
+        // $adv_data = disp_advanced_data();
+        // foreach ($adv_data as $k => $v) {
+        //     $temp[$k] = $v;
+        // }
+        // $footerData_arr = array();
+        // $footer_data = disp_footer_data($footerData_arr);
+        // $setting_data = disp_setting_data("0", "0", null, null, $temp['Key'], $temp['Api'], null, null, $footer_data);
+        // foreach ($setting_data as $k => $v) {
+        //     $temp[$k] = $v;
+        // }
 
         //$out[] = $temp;
         $Others_Data['Content'] = $temp['Des'];
@@ -629,16 +631,16 @@ function Store_Comment_List($conn, $db_prefix,$request) {
         $temp['Api'] = "&ID=" . $temp['ID'];
         $user = ["ID" => $temp['User_ID'], "Title" => $temp['User_Name'], "Img" => $temp['User_Img']];
 
-        $adv_data = disp_advanced_data(null, null, null, null, $user);
-        foreach ($adv_data as $k => $v) {
-            $temp[$k] = $v;
-        }
-        $footerData_arr = array();
-        $footer_data = disp_footer_data($footerData_arr);
-        $setting_data = disp_setting_data("0", "0", null, null, $temp['Key'], $temp['Api'], null, null, $footer_data);
-        foreach ($setting_data as $k => $v) {
-            $temp[$k] = $v;
-        }
+        // $adv_data = disp_advanced_data(null, null, null, null, $user);
+        // foreach ($adv_data as $k => $v) {
+        //     $temp[$k] = $v;
+        // }
+        // $footerData_arr = array();
+        // $footer_data = disp_footer_data($footerData_arr);
+        // $setting_data = disp_setting_data("0", "0", null, null, $temp['Key'], $temp['Api'], null, null, $footer_data);
+        // foreach ($setting_data as $k => $v) {
+        //     $temp[$k] = $v;
+        // }
         $temp['Others_Data']["Product_ID"] = $temp['Products_ID'];
         //$out[] = $temp;
         $Arr_Json = Json_CData($temp, $temp['Others_Data']);
@@ -662,16 +664,16 @@ function signin($conn, $db_prefix,$request) {
          // return md5($password);
         // $sql = "SELECT * FROM " . $db_prefix . "user WHERE email = '" . $email ."' AND status=1 AND password= '".sha1($request['Pass'])."'";
         /*$sql = "SELECT * FROM " . $db_prefix . "customer WHERE email = '" . $email ."' AND status=1 AND (password = SHA1(CONCAT(salt, SHA1(CONCAT(salt, SHA1('" . $password . "'))))) OR password = '" . md5($password) . "')";*/
-        $sql = "SELECT * FROM " . $db_prefix . "customer WHERE email = '" . $email ."' AND status=1";
+        $sql = "SELECT * FROM " .$db_prefix . "customer WHERE LOWER(email) = '" .utf8_strtolower($email) . "'AND (password = SHA1(CONCAT(salt, SHA1(CONCAT(salt, SHA1('" . $password . "'))))) OR password = '" . md5($password) . "')  AND status = '1'";
 
-        $query = $conn->query($sql);
-        $q=$query->fetch_assoc();
-        // $salt = $q['salt'];
-        // die($salt);
-        $check_pass =password_verify (  $password, $q['password'] );
+         $query = $conn->query($sql);
+        // $q=$query->fetch_assoc();
+        // // $salt = $q['salt'];
+        // // die($salt);
+        // $check_pass =password_verify (  $password, $q['password'] );
         // var_dump($check_pass);die;
         // return $query->num_rows;
-        if ($check_pass) {
+        if ($query->num_rows > 0) {
             $token = "";
             $user_pass = "";
             $img = "";
@@ -727,7 +729,7 @@ function signin($conn, $db_prefix,$request) {
             return json_encode($userdata);
         } 
         else {
-            $userdata = array("status" => array("code"=>204,"message"=>"No Content","error_details"=>array("no data found")), "content" => array());
+            $userdata = array("status" => array("code"=>204,"message"=>"No data","error_details"=>array("no data found")), "content" => array());
             return json_encode($userdata);
         }
 
@@ -740,6 +742,8 @@ function signin($conn, $db_prefix,$request) {
 
 function signup($conn, $db_prefix,$request) {
     if (isset($request['email']) && !empty($request['email']) && isset($request['password']) && !empty($request['password'])) {
+        // $this->load->model('account/cutomer');
+        // $customer = $ModelAccountCustomer->addCustomer($request);
         $userdata = array();
         $data = array();
         $data['firstname'] = isset($request['first_name']) ? $request['first_name'] : "";
@@ -751,7 +755,9 @@ function signup($conn, $db_prefix,$request) {
             // exit;
         }
         // $sql = "INSERT INTO `" . $db_prefix . "user` SET username = '" . $request['User'] . "', user_group_id = '10', salt = '" . $salt = token(9) . "', password = '" . sha1($request['Pass']) . "', firstname = '" . $data['first_name'] . "', lastname = '" . $data['last_name'] . "', email = '" . $request['email'] . "', status = '1', date_added = NOW()";
-        $sql="INSERT INTO " . $db_prefix . "customer SET customer_group_id = '" .$requset['customer_group_id'] . "', store_id = '" . $request['config_store_id'] . "', language_id = '" . $request['language_id'] . "', firstname = '" . $data['firstname'] . "', lastname = '" . $data['lastname'] . "', email = '" . $request['email'] . "', telephone = '" . $request['telephone'] . "',  salt = '" . $salt = token(9) . "', password = '"  . crypt($request['password']) . "', status = '1', date_added = NOW()";
+        $password = html_entity_decode($request['password'], ENT_QUOTES, "utf-8");
+        $salt = token(9);
+        $sql="INSERT INTO " . $db_prefix . "customer SET customer_group_id =  1 , store_id = 0 , language_id =  1 , firstname = '" . $data['firstname'] . "', lastname = '" . $data['lastname'] . "', email = '" . $request['email'] . "', telephone = '" . $request['telephone'] . "', custom_field = '', salt = '" . $salt . "', password =  SHA1(CONCAT('".$salt."', SHA1(CONCAT('".$salt."', SHA1('" . $password . "'))))), newsletter =  0 , ip = '::1', status = 1 , date_added = NOW()";
         if (DB_DRIVER == 'mysqli') {
             $conn->query($sql);
             $user_id = $conn->insert_id;
@@ -791,28 +797,28 @@ function profile($conn, $db_prefix,$request) {
             // return 'h';
             while ($res = $query->fetch_assoc()) {
                  // return 'h';
-                $arr['ID'] = (string) $user_id;
-                $arr['Title'] = $res['firstname'] . " " . $res['lastname'];
-                $arr['mobile'] = $res['telephone'];
+                $arr['id'] = (string) $user_id;
+                $arr['name'] = $res['firstname'] . " " . $res['lastname'];
+                $arr['description'] = $res['telephone'];
                 $arr['Key'] = "ID";
                 $arr['Api'] = "&ID=" . $arr['ID'];
 
                 $user = ["ID" => $arr['ID'], "Title" => $arr['Title'], "mobile" => $res['telephone']];
 
-                $adv_data = disp_advanced_data(null, null, null, null, $user);
-                // return $adv_data;
-                foreach ($adv_data as $k => $v) {
-                    $arr[$k] = $v;
-                }
+                // $adv_data = disp_advanced_data(null, null, null, null, $user);
+                // // return $adv_data;
+                // foreach ($adv_data as $k => $v) {
+                //     $arr[$k] = $v;
+                // }
 
-                $footerData_arr = array();
-                $footer_data = disp_footer_data($footerData_arr);
-                // return $footer_data;
-                $setting_data = disp_setting_data("0", "0", null, null, $arr['Key'], $arr['Api'], null, null, $footer_data);
-                // return $setting_data;
-                foreach ($setting_data as $k => $v) {
-                    $arr[$k] = $v;
-                }
+                // $footerData_arr = array();
+                // $footer_data = disp_footer_data($footerData_arr);
+                // // return $footer_data;
+                // $setting_data = disp_setting_data("0", "0", null, null, $arr['Key'], $arr['Api'], null, null, $footer_data);
+                // // return $setting_data;
+                // foreach ($setting_data as $k => $v) {
+                //     $arr[$k] = $v;
+                // }
                  // return $arr;
                 $Arr_Json = Json_CData($arr, $arr['Others_Data']);
                 // return $Arr_Json;
@@ -852,16 +858,16 @@ function Shopping_cart($conn, $db_prefix,$request) {
                     $temp['Product_Published'] = (string) strtotime($product['date_added']);
                     $temp['Link_Share'] = HTTP_SERVER . "index.php?route=product/product&product_id=" . $product['ID'];
 
-                    $adv_data = disp_advanced_data();
-                    foreach ($adv_data as $k => $v) {
-                        $temp[$k] = $v;
-                    }
-                    $footerData_arr = array();
-                    $footer_data = disp_footer_data($footerData_arr);
-                    $setting_data = disp_setting_data("0", "0", null, null, $temp['Key'], $temp['Api'], null, null, $footer_data);
-                    foreach ($setting_data as $k => $v) {
-                        $temp[$k] = $v;
-                    }
+                    // $adv_data = disp_advanced_data();
+                    // foreach ($adv_data as $k => $v) {
+                    //     $temp[$k] = $v;
+                    // }
+                    // $footerData_arr = array();
+                    // $footer_data = disp_footer_data($footerData_arr);
+                    // $setting_data = disp_setting_data("0", "0", null, null, $temp['Key'], $temp['Api'], null, null, $footer_data);
+                    // foreach ($setting_data as $k => $v) {
+                    //     $temp[$k] = $v;
+                    // }
 
                     $Others_Data['Count'] = $res['quantity'];
                     $Others_Data['ProductID'] = $res['product_id'];
@@ -930,14 +936,30 @@ function Remove_From_Shopping_Cart($conn, $db_prefix,$request) {
 //////get stores
 function get_stores($conn,$db_prefix,$request)
 {
-    $query = $conn->query("SELECT * FROM `" . $db_prefix . "store`");
-    if ($query->num_rows == 1) {
+    $query = $conn->query("SELECT * FROM " . $db_prefix . "store");
+
+    if ($query->num_rows > 0) {
         // echo $query->fetch_assoc()['user_id'];die;
         // echo $query->num_rows;die;
-        $stores= array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array("stores" => $query->fetch_assoc()));
-        return json_encode($stores);
+        $store_list=mysqli_fetch_all($query, MYSQLI_ASSOC);
+        foreach ($store_list as $store) {
+        $temp['id'] = $store['store_id'];
+        $temp['name'] = $store['name'];
+        $image = HTTP_SERVER . "";
+        $temp['image'] = $image;
+        $temp['description'] = limit_string(strip_tags(""), 200);
+        $temp['order'] = "";
+        $temp['Expire_In'] = "";
+        $temp['visit_num'] = "";
+        $temp['link_share'] =$store['url'];
+         $Arr_Json = Json_CData($temp);
+        $Final_Json[] = $Arr_Json;
+    }
+    output($Final_Json);
+        // $stores= array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array("stores" => mysqli_fetch_all($query, MYSQLI_ASSOC)));
+        // return json_encode($stores);
     } else {
-        $stores = array("status" => array("code"=>204,"message"=>"No Content","error_details"=>array("no data found")), "content" => array());
+        $stores = array("status" => array("code"=>204,"message"=>"No data","error_details"=>array("no data found")), "content" => array());
             return json_encode($stores);
     }
 }
@@ -1045,77 +1067,91 @@ function getSetting($conn, $db_prefix, $store_id, $key) {
     return isset($setting_data["value"]) ? $setting_data["value"] : "";
 }
 
-function Json_Arr_Setting($Target_Action_ID, $Target_Layout_ID, $Havesub, $Api, $Key, $Dialog, $Color, $Footer) {
-    $Setting = array();
-    $Setting['Target_Action_ID'] = "$Target_Action_ID";
-    $Setting['Target_Layout_ID'] = "$Target_Layout_ID";
-    $Setting['Havesub'] = "$Havesub";
-    $Setting['Key'] = "$Key";
-    $Setting['Api'] = "$Api";
-    $Setting['Dialog'] = "$Dialog";
-    $Setting['Color'] = "$Color";
-    $Setting['Footer'] = $Footer;
+// function Json_Arr_Setting($Target_Action_ID, $Target_Layout_ID, $Havesub, $Api, $Key, $Dialog, $Color, $Footer) {
+//     $Setting = array();
+//     $Setting['Target_Action_ID'] = "$Target_Action_ID";
+//     $Setting['Target_Layout_ID'] = "$Target_Layout_ID";
+//     $Setting['Havesub'] = "$Havesub";
+//     $Setting['Key'] = "$Key";
+//     $Setting['Api'] = "$Api";
+//     $Setting['Dialog'] = "$Dialog";
+//     $Setting['Color'] = "$Color";
+//     $Setting['Footer'] = $Footer;
 
-    return $Setting;
-}
+//     return $Setting;
+// }
 
-function Json_Basic_Data($ID, $Title, $Des, $Pic, $Link_Share, $DateTime, $Links, $ArrImg = array(), $ArrVideo = array(), $Value = 0) {
+function Json_Basic_Data($ID, $Title, $Des, $Pic, $Link_Share, $DateTime, $Links, $ArrImg = array(), $ArrVideo = array(), $Value = 0 ,$Others_Data) {
 
     $Arr['id'] = "$ID";
     $Arr['name'] = "$Title";
     $Arr['description'] = "$Des";
     $Arr['image'] = "$Pic";
+    $Arr['content']="";
     $Arr['Key'] = "$Value";
-    $Arr['Link_Share'] = "$Link_Share";
+    $Arr['link_share'] = "$Link_Share";
     $Arr['created_at'] = "$DateTime";
+    $Arr['duration']="";
     $Arr['Links'] = "$Links";
     if (count($ArrImg) == 0)
         $ArrImg = array();
     if (count($ArrVideo) == 0)
         $ArrVideo = array();
-    $Arr['Images'] = $ArrImg;
-    $Arr['Videos'] = $ArrVideo;
+    $Arr['media'] = $ArrImg;
+    $Arr['media'] += $ArrVideo;
+    $Arr['more'] =$Others_Data;
     return $Arr;
 }
 
 function Json_Others_Data($Others_Data) {
-    return $Others_Data;
+    $array['key']='keyvalue';
+    $array['group_name']="Key Value Fields";
+    $array['value']=array(array("id"=>1,"parameter"=>"","name"=>"","value"=>array("value_type"=>"","value_string"=>""),"dkv_id"=>"","title"=>"","des"=>"","setting_id"=>""));
+    return array(array_merge ($array,$Others_Data));
 }
 
-function Json_Advanced_Data($Dept = array(), $Source = array(), $Shop = array(), $Model = array(), $User = array(), $Content_Json = array(), $Author = array()) {
-    $More_Data['Dept'] = $Dept;
-    $More_Data['Source'] = $Source;
-    $More_Data['Shop'] = $Shop;
-    $More_Data['Model'] = $Model;
-    $More_Data['User'] = $User;
-    $More_Data['Author'] = $Author;
-    $More_Data['Content_Json'] = $Content_Json;
+// function Json_Advanced_Data($Dept = array(), $Source = array(), $Shop = array(), $Model = array(), $User = array(), $Content_Json = array(), $Author = array()) {
+//     $More_Data['Dept'] = $Dept;
+//     $More_Data['Source'] = $Source;
+//     $More_Data['Shop'] = $Shop;
+//     $More_Data['Model'] = $Model;
+//     $More_Data['User'] = $User;
+//     $More_Data['Author'] = $Author;
+//     $More_Data['Content_Json'] = $Content_Json;
 
-    return $More_Data;
-}
+//     return $More_Data;
+// }
 
-function Json_Stat_Data($Num_Visit, $Num_Comment) {
-    $Stat = array();
-    $Stat['Num_Visit'] = "$Num_Visit";
-    $Stat['Comment_Num'] = "$Num_Comment";
-    return $Stat;
-}
+// function Json_Stat_Data($Num_Visit, $Num_Comment) {
+//     $Stat = array();
+//     $Stat['Num_Visit'] = "$Num_Visit";
+//     $Stat['Comment_Num'] = "$Num_Comment";
+//     return $Stat;
+// }
 
 function Json_Action_Creat($Arr_Basc_Data, $Arr_Advanced_Data = array(), $Arr_Setting_Data = array(), $Arr_Stat_Data = array(), $Arr_Others_Data = array(), $Key_Value = array()) {
-    $Arr['Basc_Data'] = $Arr_Basc_Data;
-    $Arr['Advanced_Data'] = $Arr_Advanced_Data;
-    $Arr['Setting_Data'] = $Arr_Setting_Data;
-    $Arr['Stat_Data'] = $Arr_Stat_Data;
-    $Arr['more'] = $Arr_Others_Data;
-    $Arr['Key_Value'] = $Key_Value;
-    return $Arr;
+    // $array=[];
+    
+
+    // foreach (array($Arr_Basc_Data) as $key => $value) {
+    //     $value['more']=(array)$Arr_Others_Data;
+    //     $array[]=$value;
+       
+    // }
+    // $Arr['Basc_Data'] = $Arr_Basc_Data;
+    // $Arr['Advanced_Data'] = $Arr_Advanced_Data;
+    // $Arr['Setting_Data'] = $Arr_Setting_Data;
+    // $Arr['Stat_Data'] = $Arr_Stat_Data;
+    // $Arr['more'] = $Arr_Others_Data;
+    // $Arr['Key_Value'] = $Key_Value;
+    return $Arr_Basc_Data;
 }
 
 function Json_CData($output, $Others_Data = array(), $Key_Value = array()) {
-    $Arr_Basc_Data = Json_Basic_Data($output['ID'], $output['Title'], $output['Des'], $output['Pic'], $output['Link_Share'], $output['DateTime'], $output['Links'], $output['Images'], $output['Videos'], $output['Key']);
-    $Arr_Setting_Data = Json_Arr_Setting($output['Target_Action_ID'], $output['Target_Layout_ID'], $output['Havesub'], $output['Api'], $output['Key'], $output['Dialog'], $output['Color'], $output['Footer']);
-    $Arr_Stat_Data = Json_Stat_Data($output['Visit_Num'], $output['Comment_Num']);
-    $Arr_Advanced_Data = Json_Advanced_Data($output['Dept'], $output['Source'], $output['Shop'], $output['Model'], $output['User'], $output['Content_Json'], $output['Author']);
+    $Arr_Basc_Data = Json_Basic_Data($output['id'], $output['name'], $output['description'], $output['image'], $output['link_share'], $output['DateTime'], $output['Links'], $output['Images'], $output['Videos'], $output['Key'],Json_Others_Data($Others_Data));
+    // $Arr_Setting_Data = Json_Arr_Setting($output['Target_Action_ID'], $output['Target_Layout_ID'], $output['Havesub'], $output['Api'], $output['Key'], $output['Dialog'], $output['Color'], $output['Footer']);
+    // $Arr_Stat_Data = Json_Stat_Data($output['Visit_Num'], $output['Comment_Num']);
+    // $Arr_Advanced_Data = Json_Advanced_Data($output['Dept'], $output['Source'], $output['Shop'], $output['Model'], $output['User'], $output['Content_Json'], $output['Author']);
     if (empty($Others_Data))
         $Others_Data = new Jsonobjects;
 
@@ -1198,12 +1234,12 @@ function output($result) {
     header('Content-Type: application/json; charset=utf-8');
     if (strstr($_SERVER['HTTP_USER_AGENT'], 'iPod') || strstr($_SERVER['HTTP_USER_AGENT'], 'iPhone') || strstr($_SERVER['HTTP_USER_AGENT'], 'iPad')) {
         foreach ($result as $key => $value) {
-            $product = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array($value));
+            $product = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => $value);
             echo json_encode($product, 256);
             break;
         }
     } else {
-        $product = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array($result));
+        $product = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => $result);
         echo json_encode($product, 256);
     }
     exit();
