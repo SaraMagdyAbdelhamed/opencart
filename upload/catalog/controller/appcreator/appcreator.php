@@ -120,6 +120,10 @@ switch($action) {
            $result= Remove_From_Shopping_Cart($conn,$db_prefix,$request);
            echo $result;exit;
     break;
+    case "71":
+           $result= checkout($conn,$db_prefix,$request);
+           echo $result;exit;
+    break;
 	}
 }
 ?>

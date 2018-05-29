@@ -679,7 +679,7 @@ function signin($conn, $db_prefix,$request) {
             $img = "";
             $user_id = "";
             while ($res = $query->fetch_assoc()) {
-                $user_id = $res['user_id'];
+                $user_id = $res['customer_id'];
                 $token = $res['salt'];
                 $user_pass = $res['password'];
                 $img = $res['image'];
@@ -836,49 +836,43 @@ function Shopping_cart($conn, $db_prefix,$request) {
     // if (isset($userData['is_logged']) && $userData['is_logged'] == 1) {
      $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_token='".$request["api_token"]."'");
     if ($query_token->num_rows == 1) {
-        $sql = "SELECT * FROM {$db_prefix}cart";
+        $user_id=$query_token->fetch_assoc()['user_id'];
+        $sql = "SELECT * FROM {$db_prefix}cart ";
         $query = $conn->query($sql);
-        if ($query) {
+        if ($query->num_rows > 0 ) {
             $temp = array();
             $Final_Json = array();
+            $i=0;
+            $sub_total=0;
             while ($res = $query->fetch_assoc()) {
                 $sql_product = $conn->query("SELECT " . $db_prefix . "product.product_id as 'ID', date_added, viewed, image as 'Img', quantity as 'Quantity',name as 'Title',price as 'Price',description as 'Description' FROM " . $db_prefix . "product INNER JOIN " . $db_prefix . "product_description ON " . $db_prefix . "product.product_id=" . $db_prefix . "product_description.product_id WHERE " . $db_prefix . "product.product_id = '{$res['product_id']}'");
+                // $products=[];
+                
+                $items=mysqli_fetch_all($sql_product, MYSQLI_ASSOC);
+                // echo count($items);
+                foreach ($items as $product ) {
+                    $products[$i]["cart_item_id"]=$res['cart_id'];
+                    $products[$i]["product_id"]=$product['ID'];
+                    $products[$i]["product_name"]=$product['Title'];
+                    $products[$i]["product_description"]=$product['Description'];
+                    $products[$i]["product_image"]=HTTP_SERVER . "/image/$product[Img]";
+                    $products[$i]["count"]=$res['quantity'];
+                    $products[$i]["item_price"]=$product['Price'];
+                    $products[$i]["price_of_count"]=$res['quantity']*$product['Price'];
+                    
+                    $sub_total +=$res['quantity']*$product['Price'];
+                    // echo $i;
+                    $i++;
 
-                while ($product = $sql_product->fetch_assoc()) {
-                    $temp['ID'] = $product['ID'];
-                    $temp['Title'] = $product['Title'];
-                    $image = HTTP_SERVER . "/image/$product[Img]";
-                    $temp['Pic'] = $image;
-                    $temp['Des'] = limit_string($product['Description'], 200);
-                    $temp['Price'] = $product['Price'];
-                    $temp['Expire_In'] = ($product['Expire_In'] ? $product['Expire_In'] : "");
-                    $temp['Num_Visit'] = $product['viewed'];
-                    $temp['Key'] = "ID";
-                    $temp['Api'] = "&ID=" . $temp['ID'];
-                    $temp['Product_Published'] = (string) strtotime($product['date_added']);
-                    $temp['Link_Share'] = HTTP_SERVER . "index.php?route=product/product&product_id=" . $product['ID'];
-
-                    // $adv_data = disp_advanced_data();
-                    // foreach ($adv_data as $k => $v) {
-                    //     $temp[$k] = $v;
-                    // }
-                    // $footerData_arr = array();
-                    // $footer_data = disp_footer_data($footerData_arr);
-                    // $setting_data = disp_setting_data("0", "0", null, null, $temp['Key'], $temp['Api'], null, null, $footer_data);
-                    // foreach ($setting_data as $k => $v) {
-                    //     $temp[$k] = $v;
-                    // }
-
-                    $Others_Data['Count'] = $res['quantity'];
-                    $Others_Data['ProductID'] = $res['product_id'];
-                    $Others_Data['Price'] = $temp['Price'];
-
-                    $Arr_Json = Json_CData($temp, $Others_Data);
-                    $Final_Json[] = $Arr_Json;
                 }
             }
-            output($Final_Json);
+             $userdata =  array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array("products"=>$products,"sub_total"=>$sub_total,"shipping"=>0,"vat"=>0,"total"=>$sub_total,"restaurant_delivery_methods"=>array()));
+        return json_encode($userdata);
         }
+        else {
+        $userdata =  array("status" => array("code"=>204,"message"=>"No data","error_details"=>array( "cart is empty")), "content" => array());
+        return json_encode($userdata);
+    }
     } else {
         $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array());
         return json_encode($userdata);
@@ -891,19 +885,19 @@ function Add_To_Shopping_Cart($conn, $db_prefix,$request) {
      $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_token='".$request["api_token"]."'");
     if ($query_token->num_rows == 1) {
         $user_id=$query_token->fetch_assoc()['user_id'];
-        $Add = isset($request['Add']) && is_numeric($request['Add']) ? $request['Add'] : "";
-        if (add_to_cart($conn, $db_prefix, $request['ID'], 1, array(), 0, $Add)) {
-            if(isset($request['action_id']) && !empty($request['action_id']) && isset($request['product_id']) && !empty($request['product_id']))
+        $count = isset($request['count']) && is_numeric($request['count']) ? $request['count'] : "";
+        if (add_to_cart($conn, $db_prefix, $user_id , $request['item_id'], $count, array(), 0)) {
+            if(isset($request['action_id']) && !empty($request['action_id']) && isset($request['item_id']) && !empty($request['item_id']))
         {
-            $query_actions = $conn->query("INSERT INTO ". $db_prefix ."users_actions SET product_id='".$request["product_id"]."', action_id='".$request["action_id"]."' , user_id='".$user_id."'");
+            $query_actions = $conn->query("INSERT INTO ". $db_prefix ."users_actions SET product_id='".$request["item_id"]."', action_id='".$request["action_id"]."' , user_id='".$user_id."'");
         }
         else
         {
 
-            $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("action id and product id required")), "content" => array());
+            $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("action id and item id required")), "content" => array());
                 return json_encode($userdata);
         }
-            $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()),  "content" => array());
+            $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()),  "content" => array("product_id"=>$request['item_id']));
             return json_encode($userdata);
         } else {
             $userdata = array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "فشلت العملية")), "content" => array());
@@ -920,17 +914,45 @@ function Remove_From_Shopping_Cart($conn, $db_prefix,$request) {
     // if (isset($userData['is_logged']) && $userData['is_logged'] == 1) {
      $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_token='".$request["api_token"]."'");
     if ($query_token->num_rows == 1) {
-        if (remove_from_cart($conn, $db_prefix, $request['ID'])) {
+        $user_id=$query_token->fetch_assoc()['user_id'];
+        if (remove_from_cart($conn, $db_prefix, $user_id,$request['item_id'])) {
             $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()),  "content" => array());
             return json_encode($userdata);
         } else {
-            $userdata = array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "فشلت العملية")), "content" => array());
+            $userdata = array("status" => array("code"=>404,"message"=>"invalid cart item ","error_details"=>array( "product not found!")), "content" => array());
             return json_encode($userdata);
         }
     } else {
         $userdata = array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array());
         return json_encode($userdata);
     }
+}
+/////checkout
+function checkout($conn,$db_prefix,$data)
+{
+    $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_token='".$request["access_token"]."'");
+    if ($query_token->num_rows == 1) {
+        $user_id=$query_token->fetch_assoc()['user_id'];
+        $cart=$conn->query("SELECT * From".$db_prefix."cart WHERE customer_id='".$user_id."' AND cart_id IN '".$data['cart_items_ids']."'");
+        if($cart->num_rows > 0 )
+        {
+            // $order="INSERT INTO `" . $db_prefix . "order` SET invoice_prefix = '" . $data['invoice_prefix'] . "', store_id = '" . (int)$data['store_id'] . "', store_name = '" . $data['store_name'] . "', store_url = '" . $data['store_url'] . "', customer_id = '" . (int)$data['customer_id'] . "', customer_group_id = '" . (int)$data['customer_group_id'] . "', firstname = '" . $data['firstname'] . "', lastname = '" . $data['lastname'] . "', email = '" . $data['email'] . "', telephone = '" . $data['telephone'] . "', custom_field = '" . isset($data['custom_field'] ? json_encode($data['custom_field']) : '') . "', payment_firstname = '" . $data['payment_firstname'] . "', payment_lastname = '" . $data['payment_lastname'] . "', payment_company = '" . $data['payment_company'] . "', payment_address_1 = '" . $data['payment_address_1'] . "', payment_address_2 = '" . $data['payment_address_2'] . "', payment_city = '" . $data['payment_city'] . "', payment_postcode = '" . $data['payment_postcode'] . "', payment_country = '" . $data['payment_country'] . "', payment_country_id = '" . (int)$data['payment_country_id'] . "', payment_zone = '" . $data['payment_zone'] . "', payment_zone_id = '" . (int)$data['payment_zone_id'] . "', payment_address_format = '" . $data['payment_address_format'] . "', payment_custom_field = '" .isset($data['payment_custom_field'] ? json_encode($data['payment_custom_field']) : '') . "', payment_method = '" . $data['payment_method'] . "', payment_code = '" . $data['payment_code'] . "', shipping_firstname = '" . $$data['shipping_firstname'] . "', shipping_lastname = '" . $data['shipping_lastname'] . "', shipping_company = '" . $data['shipping_company'] . "', shipping_address_1 = '" . $data['shipping_address_1'] . "', shipping_address_2 = '" . $data['shipping_address_2'] . "', shipping_city = '" . $data['shipping_city'] . "', shipping_postcode = '" . $data['shipping_postcode'] . "', shipping_country = '" . $data['shipping_country'] . "', shipping_country_id = '" . (int)$data['shipping_country_id'] . "', shipping_zone = '" . $data['shipping_zone'] . "', shipping_zone_id = '" . (int)$data['shipping_zone_id'] . "', shipping_address_format = '" . $data['shipping_address_format'] . "', shipping_custom_field = '" . isset($data['shipping_custom_field'] ? json_encode($data['shipping_custom_field']) : '') . "', shipping_method = '" . $data['shipping_method'] . "', shipping_code = '" . $data['shipping_code'] . "', comment = '" . $data['comment'] . "', total = '" . (float)$data['total'] . "', affiliate_id = '" . (int)$data['affiliate_id'] . "', commission = '" . (float)$data['commission'] . "', marketing_id = '" . (int)$data['marketing_id'] . "', tracking = '" . $data['tracking'] . "', language_id = '" . (int)$data['language_id'] . "', currency_id = '" . (int)$data['currency_id'] . "', currency_code = '" . $data['currency_code'] . "', currency_value = '" . (float)$data['currency_value'] . "', ip = '" . $data['ip'] . "', forwarded_ip = '" .  $data['forwarded_ip'] . "', user_agent = '" . $data['user_agent'] . "', accept_language = '" . $data['accept_language'] . "', date_added = NOW(), date_modified = NOW()";
+        }
+        else
+        {
+           $userdata = array("status" => array("code"=>422,"message"=>"cart items did not exist","error_details"=>array( "Error happened, please try again")), "content" => array());
+        return json_encode($userdata); 
+        }
+
+        
+    }
+    else {
+        $userdata = array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array());
+        return json_encode($userdata);
+    }
+
+
+
 }
 
 //////get stores
@@ -978,17 +1000,15 @@ function check_user_exists($conn, $db_prefix, $mail = '') {
     }
 }
 
-function add_to_cart($conn, $db_prefix, $product_id, $quantity = 1, $option = array(), $recurring_id = 0, $Add = "") {
-    $query = $conn->query("SELECT COUNT(*) AS total FROM " . $db_prefix . "cart WHERE session_id = '" . session_id() . "' AND product_id = '" . (int) $product_id . "' AND recurring_id = '" . (int) $recurring_id . "' AND `option` = '" . json_encode($option) . "'");
+function add_to_cart($conn, $db_prefix, $customer_id,$product_id, $quantity , $option = array(), $recurring_id = 0) {
+    $query = $conn->query("SELECT COUNT(*) AS total FROM " . $db_prefix . "cart WHERE customer_id = '" . $customer_id . "' AND product_id = '" . (int) $product_id . "' AND recurring_id = '" . (int) $recurring_id . "' AND `option` = '" . json_encode($option) . "'");
     if ($query) {
         while ($row = $query->fetch_assoc()) {
             if (!$row['total']) {
-                $conn->query("INSERT " . $db_prefix . "cart SET session_id = '" . session_id() . "', product_id = '" . (int) $product_id . "', recurring_id = '" . (int) $recurring_id . "', `option` = '" . json_encode($option) . "', quantity = '" . (int) $quantity . "', date_added = NOW()");
+                $conn->query("INSERT " . $db_prefix . "cart SET customer_id = '" . $customer_id . "', product_id = '" . (int) $product_id . "', recurring_id = '" . (int) $recurring_id . "', `option` = '" . json_encode($option) . "', quantity = '" . (int) $quantity . "', date_added = NOW()");
             } else {
-                if ($Add) {
-                    $quantity = $Add;
-                }
-                $conn->query("UPDATE " . $db_prefix . "cart SET quantity = (quantity + " . (int) $quantity . ") WHERE session_id = '" . session_id() . "' AND product_id = '" . (int) $product_id . "' AND recurring_id = '" . (int) $recurring_id . "' AND `option` = '" . json_encode($option) . "'");
+               
+                $conn->query("UPDATE " . $db_prefix . "cart SET quantity = (quantity + " . (int) $quantity . ") WHERE customer_id = '" . $customer_id . "' AND product_id = '" . (int) $product_id . "' AND recurring_id = '" . (int) $recurring_id . "' AND `option` = '" . json_encode($option) . "'");
             }
         }
         return true;
@@ -997,8 +1017,8 @@ function add_to_cart($conn, $db_prefix, $product_id, $quantity = 1, $option = ar
     }
 }
 
-function remove_from_cart($conn, $db_prefix, $product_id) {
-    $query = $conn->query("DELETE FROM " . $db_prefix . "cart WHERE session_id = '" . session_id() . "' AND product_id='" . (int) $product_id . "';");
+function remove_from_cart($conn, $db_prefix,$user_id, $product_id) {
+    $query = $conn->query("DELETE FROM " . $db_prefix . "cart WHERE customer_id = '" . $user_id . "' AND product_id='" . (int) $product_id . "';");
     if ($query) {
         return true;
     }
