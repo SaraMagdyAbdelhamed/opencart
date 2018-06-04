@@ -14,11 +14,14 @@ function Product_List_View($conn, $db_prefix,$request) {
         
     
     $sql = "SELECT " . $db_prefix . "product.product_id as 'ID', date_added, viewed, image as 'Img'," . $db_prefix . "product.quantity as 'Quantity',name as 'Title',price as 'Price',description as 'Description' FROM " . $db_prefix . "product INNER JOIN " . $db_prefix . "product_description ON " . $db_prefix . "product_description.product_id = " . $db_prefix . "product.product_id ";
-    if (isset($request['Depts_ID'])) {
-        $sql .= " AND " . $db_prefix . "product.product_id IN (SELECT product_id FROM " . $db_prefix . "product_to_category WHERE category_id = $request[Depts_ID]) ";
+    if (isset($request['cat_id'])) {
+        $sql .= " AND " . $db_prefix . "product.product_id IN (SELECT product_id FROM " . $db_prefix . "product_to_category WHERE category_id = $request[cat_id]) ";
     }
-    if (!empty($request['q'])) {
-        $sql .= " AND name LIKE '%$request[q]%' ";
+    if (!empty($request['product_name'])) {
+        $sql .= " AND name LIKE '%$request[product_name]%' ";
+    }
+    if (!empty($request['product_id'])) {
+        $sql .= " AND " . $db_prefix . "product.product_id =$request[product_id] ";
     }
     if(isset($request['lang']))
     {
@@ -44,7 +47,7 @@ function Product_List_View($conn, $db_prefix,$request) {
         $image = HTTP_SERVER . "image/$product[Img]";
         $temp['image'] = $image;
         $temp['description'] = limit_string(strip_tags($product['Description']), 200);
-        $temp['order'] = $product['Price'];
+        $temp['price'] = $product['Price'];
         $temp['Expire_In'] = ($product['Expire_In'] ? $product['Expire_In'] : "");
         $temp['visit_num'] = $product['viewed'];
         $temp['link_share'] = HTTP_SERVER . "index.php?route=product/product&product_id=" . $product['ID'];
@@ -56,7 +59,18 @@ function Product_List_View($conn, $db_prefix,$request) {
             $comments_count = mysql_query($q);
             $c = mysql_fetch_assoc($comments_count);
         }
-        $temp['Comment_Num'] = $c['c'];
+        $temp['Comment_Num'] = $c['c']; 
+
+        $sql_rate = "SELECT avg(rating) as 'rate' FROM " . $db_prefix . "review WHERE product_id = '$product[ID]'";
+        if (DB_DRIVER == 'mysqli') {
+            $rate_avg = $conn->query($sql_rate);
+            $rate = $rate_avg->fetch_assoc();
+        } else {
+            $rate_avg = mysql_query($sql_rate);
+            $rate = mysql_fetch_assoc($rate_avg);
+        }
+        $temp['rate']=$rate['rate'];
+        
         $temp['Product_Published'] = (string) strtotime($product['date_added']);
         $q = "SELECT " . $db_prefix . "product_attribute.attribute_id as 'ID', name as 'Key', text as 'Value' FROM " . $db_prefix . "product_attribute INNER JOIN " . $db_prefix . "attribute_description ON " . $db_prefix . "attribute_description.attribute_id = " . $db_prefix . "product_attribute.attribute_id WHERE product_id = '$product[ID]'";
         if(isset($request['lang']))
@@ -1112,7 +1126,7 @@ function getSetting($conn, $db_prefix, $store_id, $key) {
 //     return $Setting;
 // }
 
-function Json_Basic_Data($ID, $Title, $Des, $Pic, $Link_Share, $DateTime, $Links, $ArrImg = array(), $ArrVideo = array(), $Value = 0 ,$Others_Data) {
+function Json_Basic_Data($ID, $Title, $Des, $Pic, $Link_Share, $DateTime, $Links, $ArrImg = array(), $ArrVideo = array(), $Value = 0 ,$Price , $Rate , $Price_Currency,$Others_Data) {
 
     $Arr['id'] = "$ID";
     $Arr['name'] = "$Title";
@@ -1123,6 +1137,9 @@ function Json_Basic_Data($ID, $Title, $Des, $Pic, $Link_Share, $DateTime, $Links
     $Arr['link_share'] = "$Link_Share";
     $Arr['created_at'] = "$DateTime";
     $Arr['duration']="";
+    $Arr['price']="$Price";
+    $Arr['rate']="$Rate";
+    $Arr['price_currency']="$Price_Currency";
     $Arr['Links'] = "$Links";
     if (count($ArrImg) == 0)
         $ArrImg = array();
@@ -1179,7 +1196,7 @@ function Json_Action_Creat($Arr_Basc_Data, $Arr_Advanced_Data = array(), $Arr_Se
 }
 
 function Json_CData($output, $Others_Data = array(), $Key_Value = array()) {
-    $Arr_Basc_Data = Json_Basic_Data($output['id'], $output['name'], $output['description'], $output['image'], $output['link_share'], $output['DateTime'], $output['Links'], $output['Images'], $output['Videos'], $output['Key'],Json_Others_Data($Others_Data));
+    $Arr_Basc_Data = Json_Basic_Data($output['id'], $output['name'], $output['description'], $output['image'], $output['link_share'], $output['DateTime'], $output['Links'], $output['Images'], $output['Videos'], $output['Key'],$output['price'],$output['rate'],$output['price_currency'],Json_Others_Data($Others_Data));
     // $Arr_Setting_Data = Json_Arr_Setting($output['Target_Action_ID'], $output['Target_Layout_ID'], $output['Havesub'], $output['Api'], $output['Key'], $output['Dialog'], $output['Color'], $output['Footer']);
     // $Arr_Stat_Data = Json_Stat_Data($output['Visit_Num'], $output['Comment_Num']);
     // $Arr_Advanced_Data = Json_Advanced_Data($output['Dept'], $output['Source'], $output['Shop'], $output['Model'], $output['User'], $output['Content_Json'], $output['Author']);
@@ -1476,5 +1493,259 @@ function Product_Action($conn, $db_prefix,$request)
 
 }
 
+function Category_Product($conn,$db_prefix,$request)
+{
+ $Category_List = array();
+        
+    
+    $sql = "SELECT " . $db_prefix . "category.category_id as 'ID', date_added, image as 'Img',name as 'Title',description as 'Description' FROM " . $db_prefix . "category INNER JOIN " . $db_prefix . "category_description ON " . $db_prefix . "category_description.category_id = " . $db_prefix . "category.category_id ";
+    if (isset($request['cat_id'])) {
+        $sql .= " WHERE " . $db_prefix . "category.parent_id  = $request[cat_id] ";
+    }
+    else
+    {
+        $sql .= " WHERE " . $db_prefix . "category.parent_id  = 0 ";
+    }
+    if (!empty($request['category_name'])) {
+        $sql .= " AND name LIKE '%$request[category_name]%' ";
+    }
+    if(isset($request['lang']))
+    {
+        $sql .= " AND " . $db_prefix . "category_description.language_id='{$request['lang']}'";
+    }
+    $sql .= " ORDER BY " . $db_prefix . "category.category_id DESC";
+    if (DB_DRIVER == 'mysqli') {
+        $Categories = $conn->query($sql);
+        while ($Category = $Categories->fetch_assoc())
+            $Category_List[] = $Category;
+    } else {
+        $Categories = mysql_query($sql);
+        while ($Category = mysql_fetch_assoc($Categories))
+            $Category_List[] = $Category;
+    }
+    $out = array();
+    $temp = array();
+    $Final_Json = array();
+    foreach ($Category_List as $Category) 
+    {
+        $temp['id'] = $Category['ID'];
+        $temp['name'] = $Category['Title'];
+        $image = HTTP_SERVER . "image/$Category[Img]";
+        $temp['image'] = $image;
+        $temp['description'] = limit_string(strip_tags($Category['Description']), 200);
+        // $temp['order'] = $product['Price'];
+        // $temp['Expire_In'] = ($product['Expire_In'] ? $product['Expire_In'] : "");
+        // $temp['visit_num'] = $product['viewed'];
+        $temp['link_share'] = HTTP_SERVER . "index.php?route=product/category&path=" . $Category['ID'];
+        // $q = "SELECT count(review_id) as 'c' FROM " . $db_prefix . "review WHERE category_id = '$Category[ID]'";
+        // if (DB_DRIVER == 'mysqli') {
+        //     $comments_count = $conn->query($q);
+        //     $c = $comments_count->fetch_assoc();
+        // } else {
+        //     $comments_count = mysql_query($q);
+        //     $c = mysql_fetch_assoc($comments_count);
+        // }
+        // $temp['Comment_Num'] = $c['c'];
+        // $temp['Product_Published'] = (string) strtotime($Category['date_added']);
+        // $q = "SELECT " . $db_prefix . "product_attribute.attribute_id as 'ID', name as 'Key', text as 'Value' FROM " . $db_prefix . "product_attribute INNER JOIN " . $db_prefix . "attribute_description ON " . $db_prefix . "attribute_description.attribute_id = " . $db_prefix . "product_attribute.attribute_id WHERE product_id = '$product[ID]'";
+    //     if(isset($request['lang']))
+    // {
+    //     $q .= " AND " . $db_prefix . "attribute_description.language_id='{$request['lang']}'";
+    // }
+    //     $t = array();
+    //     if (DB_DRIVER == 'mysqli') {
+    //         $data = $conn->query($q);
+    //         while ($c = $data->fetch_assoc())
+    //             $t[] = $c;
+    //     } else {
+    //         $data = $conn->query($q);
+    //         while ($c = mysql_fetch_assoc($data))
+    //             $t[] = $c;
+    //     }
+    //     $temp['Data'] = $t;
+    //     $q_images = "SELECT image as Image FROM " . $db_prefix . "product_image WHERE product_id='{$temp['ID']}'";
+    //     $im_arr = array();
+    //     if (DB_DRIVER == 'mysqli') {
+    //         $data = $conn->query($q_images);
+    //         while ($c = $data->fetch_assoc()) {
+    //             $images['Image'] = HTTP_SERVER . "image/" . $c['Image'];
+    //             $im_arr[] = $images;
+    //         }
+    //     } else {
+    //         $data = $conn->query($q);
+    //         while ($c = mysql_fetch_assoc($data)) {
+    //             $images['Image'] = HTTP_SERVER . "image/" . $c['Image'];
+    //             $im_arr[] = $images;
+    //         }
+    //     }
+    //     $temp['Images'] = $im_arr;
+    //     $q_shop = "SELECT store_id FROM " . $db_prefix . "product_to_store WHERE product_id='{$product['ID']}'";
+    //     if (DB_DRIVER == 'mysqli') {
+    //         $shop_res = $conn->query($q_shop);
+    //         $shop = $shop_res->fetch_assoc();
+    //     } else {
+    //         $shop_res = mysql_query($q_shop);
+    //         $shop = mysql_fetch_assoc($shop_res);
+    //     }
+    //     $temp['Key'] = "ID";
+    //     $temp['Api'] = "&ID=" . $product['ID'];
+    //     $q_color = "SELECT name, text FROM " . $db_prefix . "attribute_description inner join " . $db_prefix . "product_attribute on " . $db_prefix . "attribute_description.attribute_id=" . $db_prefix . "attribute_description.attribute_id WHERE product_id='{$product['ID']}' and name='color'";
+    //     if(isset($request['lang']))
+    // {
+    //     $q_color .= " AND " . $db_prefix . "attribute_description.language_id='{$request['lang']}'";
+    // }
+    //     if (DB_DRIVER == 'mysqli') {
+    //         $color_res = $conn->query($q_color);
+    //         $color = $color_res->fetch_assoc();
+    //     } else {
+    //         $color_res = mysql_query($q_color);
+    //         $color = mysql_fetch_assoc($color_res);
+    //     }
+    //     if (isset($color["text"])) {
+    //         $temp["Color"] = $color["text"];
+    //     } else {
+    //         $temp["Color"] = "";
+    //     }
 
+        // $adv_data = disp_advanced_data();
+        // foreach ($adv_data as $k => $v) {
+        //     $temp[$k] = $v;
+        // }
+        // $footerData_arr = array();
+        // $footer_data = disp_footer_data($footerData_arr);
+        // $setting_data = disp_setting_data("0", "0", null, null, $temp['Key'], $temp['Api'], null, $temp['Color'], $footer_data);
+        // foreach ($setting_data as $k => $v) {
+        //     $temp[$k] = $v;
+        // }
+
+        $Arr_Json = Json_CData($temp);
+        $Final_Json[] = $Arr_Json;
+    }
+    output($Final_Json);
+}
+function information($conn,$db_prefix,$request)
+{
+
+        
+    
+    $sql = "SELECT * From " . $db_prefix . "information_description WHERE information_id='{$request['id']}' ";
+    
+    if(isset($request['lang']))
+    {
+        $sql .= " AND language_id='{$request['lang']}'";
+    }
+    
+    
+        $informations = $conn->query($sql);
+        $information = $informations->fetch_assoc();
+            
+    
+    $out = array();
+    $temp = array();
+    $Final_Json = array();
+    
+        $temp['id'] = $information['information_id'];
+        $temp['name'] = $information['title'];
+        $image = "";
+        $temp['image'] = $image;
+        $temp['description'] = limit_string(strip_tags($information['description']), 200);
+        $temp['content'] = limit_string(strip_tags($information['description']), 200);
+        // $temp['order'] = $product['Price'];
+        // $temp['Expire_In'] = ($product['Expire_In'] ? $product['Expire_In'] : "");
+        // $temp['visit_num'] = $product['viewed'];
+        $temp['link_share'] = HTTP_SERVER . "index.php?route=information/information&information_id=" . $temp['id'];
+    $Arr_Json = Json_CData($temp);
+        $Final_Json[] = $Arr_Json;
+    
+    output($Final_Json);
+}
+
+
+function submit_review($conn,$db_prefix,$request)
+{
+    if(isset($request['api_token']))
+    {
+       $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_token='".$request["api_token"]."'");
+        if ($query_token->num_rows > 0) 
+        {
+            $user_id=$query_token->fetch_assoc()['user_id'];
+
+        } 
+    }
+   else
+    {
+        $user_id=0;
+
+    }
+    $user_id=0;
+    $sql_review = $conn->query("INSERT INTO " . $db_prefix . "review SET customer_id = '" . $user_id . "', product_id = '".$request['product_id']."',text = '".$request['review']."',rating = '".$request['rating']."'");
+
+         
+            $id = $conn->insert_id;
+         
+        
+ 
+             $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array("id" => $id,"user_id"=>$user_id,"rating"=>$request['rating'],"review"=>$request['review'],"status_id"=>"","created_at"=>""));
+                return json_encode($userdata);
+
+}
+function contactus($conn,$db_prefix,$request)
+{
+    if(isset($request['api_token']))
+    {
+       $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_token='".$request["api_token"]."'");
+        if ($query_token->num_rows > 0) 
+        {
+            $user_id=$query_token->fetch_assoc()['user_id'];
+            $customer=$conn->query("SELECT * FROM ". $db_prefix ."customer WHERE customer_id='".$user_id."'");
+            $name=$customer->fetch_assoc()['firstname'];
+            $email=$customer->fetch_assoc()['email'];
+        } 
+    }
+   else
+    {
+        if(isset($request['name']) && $request['name'] != "" && isset($request['name']) && $request['name'] != "")
+        {
+            $name=$request['name'];
+            $email=$request['email'];
+        }
+        else
+        {
+            $userdata = array("status" => array("code"=>1,"message"=>"Validation error","error_details"=>array(" name and email required")), "content" => array());
+            return json_encode($userdata);
+        }
+
+    }
+    $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array());
+            return json_encode($userdata);
+}
+
+function wishlist($conn,$db_prefix,$request)
+{
+    $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_token='".$request["api_token"]."'");
+        if ($query_token->num_rows > 0) 
+        {
+            $user_id=$query_token->fetch_assoc()['user_id'];
+           $wishlist= "INSERT INTO ". $db_prefix ."customer_wishlist SET customer_id='".$user_id."' , product_id= '".$request['product_id']."' ";
+              if (DB_DRIVER == 'mysqli') 
+             {
+
+            $conn->query($wishlist);
+           
+            } 
+        else
+             {
+            mysql_query($wishlist);
+           
+            }
+            $userdata =  array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array("id"=>$conn->insert_id));
+        return json_encode($userdata);
+        }
+        else
+        {
+            $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array());
+        return json_encode($userdata);
+        }
+
+}
 ?>

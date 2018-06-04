@@ -68,6 +68,10 @@ switch($action) {
         $result=Store_Product($conn,$db_prefix,$request);
         echo $result;exit;
     break;
+    case "8":
+        $result=Category_Product($conn,$db_prefix,$request);
+        echo $result;exit;
+    break;
 	case "53":
         $result=Store_Shops($conn,$db_prefix,$request);
         echo $result;exit;
@@ -122,6 +126,22 @@ switch($action) {
     break;
     case "71":
            $result= checkout($conn,$db_prefix,$request);
+           echo $result;exit;
+    break;
+    case "72":
+           $result= information($conn,$db_prefix,$request);
+           echo $result;exit;
+    break;
+    case "73":
+           $result= submit_review($conn,$db_prefix,$request);
+           echo $result;exit;
+    break;
+    case "74":
+           $result= contactus($conn,$db_prefix,$request);
+           echo $result;exit;
+    break;
+    case "75":
+           $result= wishlist($conn,$db_prefix,$request);
            echo $result;exit;
     break;
 	}
