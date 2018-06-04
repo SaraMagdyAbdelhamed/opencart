@@ -1720,7 +1720,7 @@ function contactus($conn,$db_prefix,$request)
             return json_encode($userdata);
 }
 
-function wishlist($conn,$db_prefix,$request)
+function add_to_wishlist($conn,$db_prefix,$request)
 {
     $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_token='".$request["api_token"]."'");
         if ($query_token->num_rows > 0) 
@@ -1747,5 +1747,47 @@ function wishlist($conn,$db_prefix,$request)
         return json_encode($userdata);
         }
 
+}
+function wishlist($conn,$db_prefix,$request)
+{
+    $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_token='".$request["api_token"]."'");
+    if ($query_token->num_rows == 1) {
+        $user_id=$query_token->fetch_assoc()['user_id'];
+        $sql = "SELECT * FROM {$db_prefix}customer_wishlist ";
+        $query = $conn->query($sql);
+        if ($query->num_rows > 0 ) {
+            $temp = array();
+            $Final_Json = array();
+            $i=0;
+            $sub_total=0;
+            while ($res = $query->fetch_assoc()) {
+                $sql_product = $conn->query("SELECT " . $db_prefix . "product.product_id as 'ID', date_added, viewed, image as 'Img', quantity as 'Quantity',name as 'Title',price as 'Price',description as 'Description' FROM " . $db_prefix . "product INNER JOIN " . $db_prefix . "product_description ON " . $db_prefix . "product.product_id=" . $db_prefix . "product_description.product_id WHERE " . $db_prefix . "product.product_id = '{$res['product_id']}'");
+                // $products=[];
+                
+                $items=mysqli_fetch_all($sql_product, MYSQLI_ASSOC);
+                // echo count($items);
+                foreach ($items as $product ) {
+                    
+                    $products[$i]["product_id"]=$product['ID'];
+                    $products[$i]["product_name"]=$product['Title'];
+                    $products[$i]["product_description"]=$product['Description'];
+                    $products[$i]["product_image"]=HTTP_SERVER . "/image/$product[Img]";
+                    
+                    // echo $i;
+                    $i++;
+
+                }
+            }
+             $userdata =  array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array("products"=>$products));
+        return json_encode($userdata);
+        }
+        else {
+        $userdata =  array("status" => array("code"=>204,"message"=>"No data","error_details"=>array( "cart is empty")), "content" => array());
+        return json_encode($userdata);
+    }
+    } else {
+        $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array());
+        return json_encode($userdata);
+    }
 }
 ?>

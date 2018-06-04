@@ -141,6 +141,10 @@ switch($action) {
            echo $result;exit;
     break;
     case "75":
+           $result= add_to_wishlist($conn,$db_prefix,$request);
+           echo $result;exit;
+    break;
+    case "76":
            $result= wishlist($conn,$db_prefix,$request);
            echo $result;exit;
     break;
