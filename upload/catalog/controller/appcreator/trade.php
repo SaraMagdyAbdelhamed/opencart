@@ -143,7 +143,7 @@ function Product_List_View($conn, $db_prefix,$request) {
         //     $temp[$k] = $v;
         // }
 
-        $Arr_Json = Json_CData($temp);
+        $Arr_Json = Json_CData($temp,$temp['Data']);
         $Final_Json[] = $Arr_Json;
     }
     output($Final_Json);
@@ -233,7 +233,7 @@ function Store_Display($conn, $db_prefix, $product_id,$request) {
     $temp = array();
     $temp['id'] = $Product_List['ID'];
     $temp['User_ID'] = 1;
-    $temp['User_Title'] = "Administrator";
+    $temp['name'] = "Administrator";
     $q = "SELECT category_id as 'Depts_ID',name as 'Dept_Title' FROM " . $db_prefix . "category_description WHERE category_id = (SELECT category_id FROM " . $db_prefix . "product_to_category WHERE product_id = " . $request['ID'] . " LIMIT 0,1) LIMIT 0,1";
     
     if(isset($request['lang']))
@@ -1033,7 +1033,7 @@ function add_to_cart($conn, $db_prefix, $customer_id,$product_id, $quantity , $o
                 $conn->query("INSERT " . $db_prefix . "cart SET customer_id = '" . $customer_id . "', product_id = '" . (int) $product_id . "', recurring_id = '" . (int) $recurring_id . "', `option` = '" . json_encode($option) . "', quantity = '" . (int) $quantity . "', date_added = NOW()");
             } else {
                
-                $conn->query("UPDATE " . $db_prefix . "cart SET quantity = (quantity + " . (int) $quantity . ") WHERE customer_id = '" . $customer_id . "' AND product_id = '" . (int) $product_id . "' AND recurring_id = '" . (int) $recurring_id . "' AND `option` = '" . json_encode($option) . "'");
+                $conn->query("UPDATE " . $db_prefix . "cart SET quantity = " . (int) $quantity . " WHERE customer_id = '" . $customer_id . "' AND product_id = '" . (int) $product_id . "' AND recurring_id = '" . (int) $recurring_id . "' AND `option` = '" . json_encode($option) . "'");
             }
         }
         return true;
@@ -1141,6 +1141,7 @@ function Json_Basic_Data($ID, $Title, $Des, $Pic, $Link_Share, $DateTime, $Links
     $Arr['rate']="$Rate";
     $Arr['price_currency']="$Price_Currency";
     $Arr['Links'] = "$Links";
+    
     if (count($ArrImg) == 0)
         $ArrImg = array();
     if (count($ArrVideo) == 0)
@@ -1152,10 +1153,22 @@ function Json_Basic_Data($ID, $Title, $Des, $Pic, $Link_Share, $DateTime, $Links
 }
 
 function Json_Others_Data($Others_Data) {
+    // return $Others_Data;
     $array['key']='keyvalue';
     $array['group_name']="Key Value Fields";
-    $array['value']=array(array("id"=>1,"parameter"=>"","name"=>"","value"=>array("value_type"=>"","value_string"=>""),"dkv_id"=>"","title"=>"","des"=>"","setting_id"=>""));
-    return array(array_merge ($array,$Others_Data));
+    if(count($Others_Data) > 0 )
+    {
+        foreach ($Others_Data as $key => $value) {
+        $array['value'][]=array("id"=>$value['ID'],"parameter"=>"","name"=>$value['Key'],"value"=>array("value_type"=>"normal","value_string"=>$value['Value']),"dkv_id"=>"","title"=>"","des"=>"","setting_id"=>"");
+    }
+    }
+    else
+    {
+        $array['value']=array(array("id"=>0,"parameter"=>"","name"=>"","value"=>array("value_type"=>"normal","value_string"=>""),"dkv_id"=>"","title"=>"","des"=>"","setting_id"=>""));
+    }
+    
+    // $array['value']=array(array("id"=>1,"parameter"=>"","name"=>"","value"=>array("value_type"=>"","value_string"=>""),"dkv_id"=>"","title"=>"","des"=>"","setting_id"=>""));
+    return array($array);
 }
 
 // function Json_Advanced_Data($Dept = array(), $Source = array(), $Shop = array(), $Model = array(), $User = array(), $Content_Json = array(), $Author = array()) {
@@ -1726,19 +1739,17 @@ function add_to_wishlist($conn,$db_prefix,$request)
         if ($query_token->num_rows > 0) 
         {
             $user_id=$query_token->fetch_assoc()['user_id'];
-           $wishlist= "INSERT INTO ". $db_prefix ."customer_wishlist SET customer_id='".$user_id."' , product_id= '".$request['product_id']."' ";
-              if (DB_DRIVER == 'mysqli') 
-             {
-
-            $conn->query($wishlist);
-           
-            } 
-        else
-             {
+           $wishlist= "INSERT INTO ". $db_prefix ."customer_wishlist SET customer_id='".$user_id."' , product_id= '".$request['product_id']."'";
+            if (DB_DRIVER == 'mysqli') {
+            $conn->query($sql);
+            $id = $conn->wishlist;
+            
+        } else {
             mysql_query($wishlist);
-           
-            }
-            $userdata =  array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array("id"=>$conn->insert_id));
+            $id = mysql_insert_id();
+        }
+        
+            $userdata =  array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array("id"=>$id));
         return json_encode($userdata);
         }
         else
@@ -1789,5 +1800,97 @@ function wishlist($conn,$db_prefix,$request)
         $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array());
         return json_encode($userdata);
     }
+}
+function remove_from_wishlist($conn,$db_prefix,$request)
+{
+    $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_token='".$request["api_token"]."'");
+        if ($query_token->num_rows > 0) 
+        {
+            $user_id=$query_token->fetch_assoc()['user_id'];
+           $query = $conn->query("DELETE FROM " . $db_prefix . "customer_wishlist WHERE customer_id = '" . $user_id . "' AND product_id='" . (int) $request['product_id'] . "';");
+    if ($query) {
+         $userdata =  array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array());
+        return json_encode($userdata);
+    }
+     else { 
+            $userdata = array("status" => array("code"=>404,"message"=>"invalid wishlist item ","error_details"=>array( "product not found!")), "content" => array());
+            return json_encode($userdata);
+        }
+        
+           
+        }
+        else
+        {
+            $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array());
+        return json_encode($userdata);
+        }
+
+}
+
+function product_offers($conn,$db_prefix,$request)
+{
+    $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_token='".$request["api_token"]."'");
+        if ($query_token->num_rows > 0) 
+        {
+            $Product_List = array();
+        
+    
+        $sql = "SELECT " . $db_prefix . "product.product_id as 'ID', date_added, viewed, image as 'Img'," . $db_prefix . "product.quantity as 'Quantity',name as 'Title',price as 'Price',description as 'Description' 
+            FROM " . $db_prefix . "product 
+            INNER JOIN " . $db_prefix . "product_description ON " . $db_prefix . "product_description.product_id = " . $db_prefix . "product.product_id  
+            ";
+         if (DB_DRIVER == 'mysqli') {
+        $Products = $conn->query($sql);
+        while ($Product = $Products->fetch_assoc())
+            $Product_List[] = $Product;
+    } else {
+        $Products = mysql_query($sql);
+        while ($Product = mysql_fetch_assoc($Products))
+            $Product_List[] = $Product;
+    }
+    $temp = array();
+    $Final_Json = array();
+    foreach ($Product_List as $product) 
+    {
+        $discount = $conn->query("SELECT * FROM " . $db_prefix . "product_discount WHERE product_id = '$product[ID]'");
+        if($discount->num_rows >0  )
+        {
+            $temp['id'] = $product['ID'];
+        $temp['name'] = $product['Title'];
+        $image = HTTP_SERVER . "image/$product[Img]";
+        $temp['image'] = $image;
+        $temp['description'] = limit_string(strip_tags($product['Description']), 200);
+        $temp['price'] = $product['Price'];
+        $temp['Expire_In'] = ($product['Expire_In'] ? $product['Expire_In'] : "");
+        $temp['visit_num'] = $product['viewed'];
+        $temp['link_share'] = HTTP_SERVER . "index.php?route=product/product&product_id=" . $product['ID'];
+        
+        $c=mysqli_fetch_all($discount, MYSQLI_ASSOC);
+        // $temp['Data']=$c;
+        $temp['discount'];
+        $i=0;
+        foreach ($c as $key => $value) {
+             $temp['discount'][$i]['percentage']=($product['Price']*$value['price'])/100 .'%';
+             $temp['discount'][$i]['quantity']=$value['quantity'];
+             $temp['discount'][$i]['priority']=$value['priority'];
+             $temp['discount'][$i]['date_start']=$value['date_start'];
+             $temp['discount'][$i]['date_end']=$value['date_end'];
+             $i++;
+        }
+        // return $c;
+         $Arr_Json = $temp;
+         $Final_Json[] = $Arr_Json; 
+        }
+       
+    }
+     output($Final_Json);
+    // return json_encode($Product_List); 
+        }
+        else
+        {
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array());
+        return json_encode($userdata); 
+        }
+
 }
 ?>

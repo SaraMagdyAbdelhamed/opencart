@@ -148,6 +148,14 @@ switch($action) {
            $result= wishlist($conn,$db_prefix,$request);
            echo $result;exit;
     break;
+    case "77":
+           $result= remove_from_wishlist($conn,$db_prefix,$request);
+           echo $result;exit;
+    break;
+    case "78":
+           $result= product_offers($conn,$db_prefix,$request);
+           echo $result;exit;
+    break;
 	}
 }
 ?>
