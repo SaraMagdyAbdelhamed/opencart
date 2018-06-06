@@ -18,7 +18,7 @@ function Product_List_View($conn, $db_prefix,$request) {
         $sql .= " AND " . $db_prefix . "product.product_id IN (SELECT product_id FROM " . $db_prefix . "product_to_category WHERE category_id = $request[cat_id]) ";
     }
     if (!empty($request['product_name'])) {
-        $sql .= " AND name LIKE '%$request[product_name]%' ";
+        $sql .= " AND name LIKE '$request[product_name]%' ";
     }
     if (!empty($request['product_id'])) {
         $sql .= " AND " . $db_prefix . "product.product_id =$request[product_id] ";
@@ -1891,6 +1891,31 @@ function product_offers($conn,$db_prefix,$request)
            $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array());
         return json_encode($userdata); 
         }
+
+}
+function product_search($conn,$db_prefix,$request)
+{
+     $Product_List = array();
+        
+    
+        $sql = "SELECT " . $db_prefix . "product.product_id as 'ID',name as 'Title' 
+            FROM " . $db_prefix . "product 
+            INNER JOIN " . $db_prefix . "product_description ON " . $db_prefix . "product_description.product_id = " . $db_prefix . "product.product_id  
+            ";
+    if (!empty($request['product_name'])) {
+        $sql .= " AND name LIKE '$request[product_name]%' ";
+    }
+         if (DB_DRIVER == 'mysqli') {
+        $Products = $conn->query($sql);
+        while ($Product = $Products->fetch_assoc())
+            $Product_List[] = $Product;
+    } else {
+        $Products = mysql_query($sql);
+        while ($Product = mysql_fetch_assoc($Products))
+            $Product_List[] = $Product;
+    }
+    $products =  array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array("products"=>$Product_List));
+        return json_encode($products);
 
 }
 ?>

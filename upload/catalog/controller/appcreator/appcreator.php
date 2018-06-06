@@ -156,6 +156,14 @@ switch($action) {
            $result= product_offers($conn,$db_prefix,$request);
            echo $result;exit;
     break;
+    case "79":
+           $result= product_filters($conn,$db_prefix,$request);
+           echo $result;exit;
+    break;
+    case "80":
+           $result= product_search($conn,$db_prefix,$request);
+           echo $result;exit;
+    break;
 	}
 }
 ?>
