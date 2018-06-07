@@ -947,15 +947,16 @@ function checkout($conn,$db_prefix,$data)
     $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_token='".$data["access_token"]."'");
     if ($query_token->num_rows == 1) {
         $user_id=$query_token->fetch_assoc()['user_id'];
-        // var_dump(implode(',',$data['cart_items_ids']));die;
-        $cart=$conn->query("SELECT * From ".$db_prefix." cart WHERE customer_id='".$user_id."' AND cart_id IN ('".$data['cart_items_ids']."')");
-        // var_dump($cart->num_rows);die;
+         // var_dump(implode(',',$data['cart_items_ids']));die;
+        $cart=$conn->query("SELECT * From ".$db_prefix."cart WHERE customer_id='".(int)$user_id."' AND cart_id IN ('".implode(',',$data['cart_items_ids'])."')");
+          // var_dump($cart->fetch_assoc()['customer_id']);die;
         if( $cart->num_rows > 0  )
         {
-            $user=$conn->query("SELECT * From ".$db_prefix." customer WHERE customer_id='".$user_id."'");
-            // var_dump($user->num_rows);die;
+            $user=$conn->query("SELECT * From ".$db_prefix."customer WHERE customer_id='".$user_id."'");
+             // var_dump($user->num_rows);die;
             $customer=$user->fetch_assoc();
-            $store_info=$conn->query("SELECT * From".$db_prefix."store WHERE store_id='".$data['store_id']."'");
+            $store_info=$conn->query("SELECT * From ".$db_prefix."store WHERE store_id='".(int)$data['store_id']."'");
+            // var_dump($store_info->num_rows);die;
             $store=$store_info->fetch_assoc();
             $order="INSERT INTO `" . $db_prefix . "order` SET invoice_prefix ='INV-2018-00', store_id = '" . $data['store_id'] . "', store_name = '" . $store['name'] . "', store_url = '" . $store['url'] . "', customer_id = '" . $data['customer_id'] . "', customer_group_id = '" . $customer['customer_group_id'] . "', firstname = '" . $customer['firstname'] . "', lastname = '" . $customer['lastname'] . "', email = '" . $customer['email'] . "', telephone = '" . $customer['telephone'] . "', custom_field = '" .$customer['custom_field']  . "', payment_firstname = '" . $data['payment_firstname'] . "', payment_lastname = '" . $data['payment_lastname'] . "', payment_company = '" . $data['payment_company'] . "', payment_address_1 = '" . $data['payment_address_1'] . "', payment_address_2 = '" . $data['payment_address_2'] . "', payment_city = '" . $data['payment_city'] . "', payment_postcode = '" . $data['payment_postcode'] . "', payment_country = '" . $data['payment_country'] . "', payment_country_id = '" . $data['payment_country_id'] . "', payment_zone = '" . $data['payment_zone'] . "', payment_zone_id = '" . $data['payment_zone_id'] . "', payment_address_format = '" . $data['payment_address_format'] . "', payment_custom_field = 1 , payment_method = '" . $data['payment_method'] . "', payment_code = '" . $data['payment_code'] . "', shipping_firstname = '" . $data['shipping_firstname'] . "', shipping_lastname = '" . $data['shipping_lastname'] . "', shipping_company = '" . $data['shipping_company'] . "', shipping_address_1 = '" . $data['shipping_address_1'] . "', shipping_address_2 = '" . $data['shipping_address_2'] . "', shipping_city = '" . $data['shipping_city'] . "', shipping_postcode = '" . $data['shipping_postcode'] . "', shipping_country = '" . $data['shipping_country'] . "', shipping_country_id = '" . $data['shipping_country_id'] . "', shipping_zone = '" . $data['shipping_zone'] . "', shipping_zone_id = '" . $data['shipping_zone_id'] . "', shipping_address_format = '" . $data['shipping_address_format'] . "', shipping_custom_field = 1, shipping_method = '" . $data['shipping_method'] . "', shipping_code = '" . $data['shipping_code'] . "', comment = '" . $data['comment'] . "', total = '" . $data['total_price'] . "', language_id = '" . $customer['language_id'] . "', currency_code = '" . $data['currency_code'] . "',  ip = '" . $customer['ip'] . "', forwarded_ip = '" .  $customer['forwarded_ip'] . "', date_added = NOW(), date_modified = NOW()";
             $conn->query($order);
