@@ -957,7 +957,7 @@ function checkout($conn,$db_prefix,$data)
             $customer=$user->fetch_assoc();
             $store_info=$conn->query("SELECT * From".$db_prefix."store WHERE store_id='".$data['store_id']."'");
             $store=$store_info->fetch_assoc();
-            $order="INSERT INTO `" . $db_prefix . "order` SET invoice_prefix = '" . $data['invoice_prefix'] . "', store_id = '" . (int)$data['store_id'] . "', store_name = '" . $store['name'] . "', store_url = '" . $store['url'] . "', customer_id = '" . $data['customer_id'] . "', customer_group_id = '" . $customer['customer_group_id'] . "', firstname = '" . $customer['firstname'] . "', lastname = '" . $customer['lastname'] . "', email = '" . $customer['email'] . "', telephone = '" . $customer['telephone'] . "', custom_field = '" .$customer['custom_field']  . "', payment_firstname = '" . $data['payment_firstname'] . "', payment_lastname = '" . $data['payment_lastname'] . "', payment_company = '" . $data['payment_company'] . "', payment_address_1 = '" . $data['payment_address_1'] . "', payment_address_2 = '" . $data['payment_address_2'] . "', payment_city = '" . $data['payment_city'] . "', payment_postcode = '" . $data['payment_postcode'] . "', payment_country = '" . $data['payment_country'] . "', payment_country_id = '" . $data['payment_country_id'] . "', payment_zone = '" . $data['payment_zone'] . "', payment_zone_id = '" . $data['payment_zone_id'] . "', payment_address_format = '" . $data['payment_address_format'] . "', payment_custom_field = 1 , payment_method = '" . $data['payment_method'] . "', payment_code = '" . $data['payment_code'] . "', shipping_firstname = '" . $data['shipping_firstname'] . "', shipping_lastname = '" . $data['shipping_lastname'] . "', shipping_company = '" . $data['shipping_company'] . "', shipping_address_1 = '" . $data['shipping_address_1'] . "', shipping_address_2 = '" . $data['shipping_address_2'] . "', shipping_city = '" . $data['shipping_city'] . "', shipping_postcode = '" . $data['shipping_postcode'] . "', shipping_country = '" . $data['shipping_country'] . "', shipping_country_id = '" . $data['shipping_country_id'] . "', shipping_zone = '" . $data['shipping_zone'] . "', shipping_zone_id = '" . $data['shipping_zone_id'] . "', shipping_address_format = '" . $data['shipping_address_format'] . "', shipping_custom_field = 1, shipping_method = '" . $data['shipping_method'] . "', shipping_code = '" . $data['shipping_code'] . "', comment = '" . $data['comment'] . "', total = '" . $data['total_price'] . "', language_id = '" . $customer['language_id'] . "', currency_code = '" . $data['currency_code'] . "',  ip = '" . $customer['ip'] . "', forwarded_ip = '" .  $customer['forwarded_ip'] . "', date_added = NOW(), date_modified = NOW()";
+            $order="INSERT INTO `" . $db_prefix . "order` SET invoice_prefix ='INV-2018-00', store_id = '" . $data['store_id'] . "', store_name = '" . $store['name'] . "', store_url = '" . $store['url'] . "', customer_id = '" . $data['customer_id'] . "', customer_group_id = '" . $customer['customer_group_id'] . "', firstname = '" . $customer['firstname'] . "', lastname = '" . $customer['lastname'] . "', email = '" . $customer['email'] . "', telephone = '" . $customer['telephone'] . "', custom_field = '" .$customer['custom_field']  . "', payment_firstname = '" . $data['payment_firstname'] . "', payment_lastname = '" . $data['payment_lastname'] . "', payment_company = '" . $data['payment_company'] . "', payment_address_1 = '" . $data['payment_address_1'] . "', payment_address_2 = '" . $data['payment_address_2'] . "', payment_city = '" . $data['payment_city'] . "', payment_postcode = '" . $data['payment_postcode'] . "', payment_country = '" . $data['payment_country'] . "', payment_country_id = '" . $data['payment_country_id'] . "', payment_zone = '" . $data['payment_zone'] . "', payment_zone_id = '" . $data['payment_zone_id'] . "', payment_address_format = '" . $data['payment_address_format'] . "', payment_custom_field = 1 , payment_method = '" . $data['payment_method'] . "', payment_code = '" . $data['payment_code'] . "', shipping_firstname = '" . $data['shipping_firstname'] . "', shipping_lastname = '" . $data['shipping_lastname'] . "', shipping_company = '" . $data['shipping_company'] . "', shipping_address_1 = '" . $data['shipping_address_1'] . "', shipping_address_2 = '" . $data['shipping_address_2'] . "', shipping_city = '" . $data['shipping_city'] . "', shipping_postcode = '" . $data['shipping_postcode'] . "', shipping_country = '" . $data['shipping_country'] . "', shipping_country_id = '" . $data['shipping_country_id'] . "', shipping_zone = '" . $data['shipping_zone'] . "', shipping_zone_id = '" . $data['shipping_zone_id'] . "', shipping_address_format = '" . $data['shipping_address_format'] . "', shipping_custom_field = 1, shipping_method = '" . $data['shipping_method'] . "', shipping_code = '" . $data['shipping_code'] . "', comment = '" . $data['comment'] . "', total = '" . $data['total_price'] . "', language_id = '" . $customer['language_id'] . "', currency_code = '" . $data['currency_code'] . "',  ip = '" . $customer['ip'] . "', forwarded_ip = '" .  $customer['forwarded_ip'] . "', date_added = NOW(), date_modified = NOW()";
             $conn->query($order);
             $checkout_id = $conn->insert_id;
             $order_data = array("status" => array("code"=>200,"message"=>"success","error_details"=>array( "")), "content" => array("checkout_id"=>$checkout_id ,"user_name"=>$customer['firstname'],"total_price"=>$data['total_price'],"store"=>$store['name']));
@@ -1717,16 +1717,18 @@ function contactus($conn,$db_prefix,$request)
     }
    else
     {
-        if(isset($request['name']) && $request['name'] != "" && isset($request['name']) && $request['name'] != "")
-        {
-            $name=$request['name'];
-            $email=$request['email'];
-        }
-        else
-        {
-            $userdata = array("status" => array("code"=>1,"message"=>"Validation error","error_details"=>array(" name and email required")), "content" => array());
-            return json_encode($userdata);
-        }
+        // if(isset($request['name']) && $request['name'] != "" && isset($request['name']) && $request['name'] != "")
+        // {
+        //     $name=$request['name'];
+        //     $email=$request['email'];
+        // }
+        // else
+        // {
+        //     $userdata = array("status" => array("code"=>1,"message"=>"Validation error","error_details"=>array(" name and email required")), "content" => array());
+        //     return json_encode($userdata);
+        // }
+        $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array());
+        return json_encode($userdata);
 
     }
     $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array());
@@ -1917,5 +1919,84 @@ function product_search($conn,$db_prefix,$request)
     $products =  array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array("products"=>$Product_List));
         return json_encode($products);
 
+}
+function product_filters($conn,$db_prefix,$request)
+{
+    $Product_List = array();
+        
+    
+    $sql = "SELECT " . $db_prefix . "product.product_id as 'ID', date_added, viewed, image as 'Img'," . $db_prefix . "product.quantity as 'Quantity',name as 'Title',price as 'Price',description as 'Description' 
+        FROM " . $db_prefix . "product 
+        INNER JOIN " . $db_prefix . "product_description ON " . $db_prefix . "product_description.product_id = " . $db_prefix . "product.product_id ";
+    // if(isset($request['has_offer']) && $request['has_offer'] == 1)
+    // {
+    //     $sql .=" INNER JOIN " . $db_prefix . "product_discount ON " . $db_prefix . "product_discount.product_id = " . $db_prefix . "product.product_id ";
+    // }
+    // else if(isset($request['has_offer']) && $request['has_offer'] == 0)
+    // {
+    //     $sql .=" LEFT JOIN " . $db_prefix . "product_discount ON " . $db_prefix . "product_discount.product_id = " . $db_prefix . "product.product_id";
+    // }
+    if(isset($request['price']) && $request['price'] != "")
+    {
+        // return $request['price_operator'];
+        $sql .="AND price  = '". $request['price']."'";
+    } 
+    if (DB_DRIVER == 'mysqli') {
+        $Products = $conn->query($sql);
+        while ($Product = $Products->fetch_assoc())
+            $Product_List[] = $Product;
+    } else {
+        $Products = mysql_query($sql);
+        while ($Product = mysql_fetch_assoc($Products))
+            $Product_List[] = $Product;
+    }
+    $out = array();
+    $temp = array();
+    $Final_Json = array();
+    foreach ($Product_List as $product) 
+    {
+        if(isset($request['rating']) && $request['rating']!= "")
+        {
+            $sql_rate = "SELECT avg(rating) as 'rate' FROM " . $db_prefix . "review WHERE product_id = '$product[ID]'";
+        if (DB_DRIVER == 'mysqli') {
+            $rate_avg = $conn->query($sql_rate);
+            $rate = $rate_avg->fetch_assoc();
+        } else {
+            $rate_avg = mysql_query($sql_rate);
+            $rate = mysql_fetch_assoc($rate_avg);
+        }
+        $temp['rate']=$rate['rate'];
+        if($temp['rate'] == $request['rating'])
+        {
+           $temp['id'] = $product['ID'];
+        $temp['name'] = $product['Title'];
+        $image = HTTP_SERVER . "image/$product[Img]";
+        $temp['image'] = $image;
+        $temp['description'] = limit_string(strip_tags($product['Description']), 200);
+        $temp['price'] = $product['Price'];
+        $temp['Expire_In'] = ($product['Expire_In'] ? $product['Expire_In'] : "");
+        $temp['visit_num'] = $product['viewed'];
+        $temp['link_share'] = HTTP_SERVER . "index.php?route=product/product&product_id=" . $product['ID']; 
+        }
+        }
+        else
+        {
+            $temp['id'] = $product['ID'];
+        $temp['name'] = $product['Title'];
+        $image = HTTP_SERVER . "image/$product[Img]";
+        $temp['image'] = $image;
+        $temp['description'] = limit_string(strip_tags($product['Description']), 200);
+        $temp['price'] = $product['Price'];
+        $temp['Expire_In'] = ($product['Expire_In'] ? $product['Expire_In'] : "");
+        $temp['visit_num'] = $product['viewed'];
+        $temp['link_share'] = HTTP_SERVER . "index.php?route=product/product&product_id=" . $product['ID'];
+        }
+        
+         
+
+    $Arr_Json = Json_CData($temp);
+        $Final_Json[] = $Arr_Json;
+    }
+    output($Final_Json);
 }
 ?>
