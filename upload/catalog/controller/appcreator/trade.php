@@ -1679,9 +1679,11 @@ function submit_review($conn,$db_prefix,$request)
 {
     if(isset($request['api_token']))
     {
+
        $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_token='".$request["api_token"]."'");
         if ($query_token->num_rows > 0) 
         {
+
             $user_id=$query_token->fetch_assoc()['user_id'];
 
         } 
@@ -1691,8 +1693,9 @@ function submit_review($conn,$db_prefix,$request)
         $user_id=0;
 
     }
-    $user_id=0;
-    $sql_review = $conn->query("INSERT INTO " . $db_prefix . "review SET customer_id = '" . $user_id . "', product_id = '".$request['product_id']."',text = '".$request['review']."',rating = '".$request['rating']."'");
+    // var_dump($user_id);die;
+    // $user_id=0;
+    $sql_review = $conn->query("INSERT INTO " . $db_prefix . "review SET customer_id = '" . $user_id . "', product_id = '".$request['product_id']."',text = '".$request['review']."',rating = '".$request['rating']."' , date_added = NOW()");
 
          
             $id = $conn->insert_id;
@@ -1742,17 +1745,18 @@ function add_to_wishlist($conn,$db_prefix,$request)
         if ($query_token->num_rows > 0) 
         {
             $user_id=$query_token->fetch_assoc()['user_id'];
-           $wishlist= "INSERT INTO ". $db_prefix ."customer_wishlist SET customer_id='".$user_id."' , product_id= '".$request['product_id']."'";
-            if (DB_DRIVER == 'mysqli') {
-            $conn->query($sql);
-            $id = $conn->wishlist;
+           $wishlist= $conn->query("INSERT INTO ".$db_prefix."customer_wishlist SET customer_id ='".(int)$user_id."' , product_id = '".(int)$request['product_id']."', date_added = NOW()");
+            // var_dump("INSERT INTO ".$db_prefix."customer_wishlist SET customer_id ='".(int)$user_id."' , product_id = '".(int)$request['product_id']."', date_added = NOW()");die;
+        //     if (DB_DRIVER == 'mysqli') {
+        //     $conn->query($sql);
+        //     $id = $conn->wishlist;
             
-        } else {
-            mysql_query($wishlist);
-            $id = mysql_insert_id();
-        }
+        // } else {
+        //     mysql_query($wishlist);
+        //     $id = mysql_insert_id();
+        // }
         
-            $userdata =  array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array("id"=>$id));
+            $userdata =  array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array("id"=>$conn->insert_id));
         return json_encode($userdata);
         }
         else
