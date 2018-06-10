@@ -1395,14 +1395,26 @@ $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_
     if ($query_token->num_rows > 0) 
     {
         $user_id=$query_token->fetch_assoc()['user_id'];
-         $query = $conn->query("UPDATE " . $db_prefix . "user SET  salt = '" . $salt = token(9) . "', password = '" . sha1($salt . sha1($salt . sha1($request['password']))) . "' WHERE user_id='".$user_id."'");
-    if ($query) {
+        $password = html_entity_decode($request['old_password'], ENT_QUOTES, "utf-8");
+        $check_password=$conn->query("SELECT * FROM ".$db_prefix."customer WHERE customer_id='".$user_id."' AND (password = SHA1(CONCAT(salt, SHA1(CONCAT(salt, SHA1('" . $password . "'))))) OR password = '" . md5($password) . "')");
+        if($check_password)
+        {
+            $salt = token(9);
+         $query = $conn->query("UPDATE " . $db_prefix . "customer SET  salt = '" .$salt  . "', password = '" . sha1($salt . sha1($salt . sha1($request['new_password']))) . "' WHERE customer_id='".$user_id."'");
+        
+    if ($query)
+         {
 
         $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array("user_id" => $user_id));
             return json_encode($userdata);
-    }
+         }
     return false;
-
+        }
+        else
+        {
+            $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("wrong password!")), "content" => array());
+            return json_encode($userdata);
+        }
     }
     else
     {
@@ -1771,7 +1783,7 @@ function wishlist($conn,$db_prefix,$request)
     $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_token='".$request["api_token"]."'");
     if ($query_token->num_rows == 1) {
         $user_id=$query_token->fetch_assoc()['user_id'];
-        $sql = "SELECT * FROM {$db_prefix}customer_wishlist ";
+        $sql = "SELECT * FROM {$db_prefix}customer_wishlist WHERE customer_id='".$user_id."'";
         $query = $conn->query($sql);
         if ($query->num_rows > 0 ) {
             $temp = array();
@@ -1933,14 +1945,14 @@ function product_filters($conn,$db_prefix,$request)
     $sql = "SELECT " . $db_prefix . "product.product_id as 'ID', date_added, viewed, image as 'Img'," . $db_prefix . "product.quantity as 'Quantity',name as 'Title',price as 'Price',description as 'Description' 
         FROM " . $db_prefix . "product 
         INNER JOIN " . $db_prefix . "product_description ON " . $db_prefix . "product_description.product_id = " . $db_prefix . "product.product_id ";
-    // if(isset($request['has_offer']) && $request['has_offer'] == 1)
-    // {
-    //     $sql .=" INNER JOIN " . $db_prefix . "product_discount ON " . $db_prefix . "product_discount.product_id = " . $db_prefix . "product.product_id ";
-    // }
-    // else if(isset($request['has_offer']) && $request['has_offer'] == 0)
-    // {
-    //     $sql .=" LEFT JOIN " . $db_prefix . "product_discount ON " . $db_prefix . "product_discount.product_id = " . $db_prefix . "product.product_id";
-    // }
+    if(isset($request['has_offer']) && $request['has_offer'] == 1)
+    {
+        $sql .=" INNER JOIN " . $db_prefix . "product_discount ON " . $db_prefix . "product_discount.product_id = " . $db_prefix . "product.product_id ";
+    }
+    else if(isset($request['has_offer']) && $request['has_offer'] == 0)
+    {
+        $sql .=" LEFT JOIN " . $db_prefix . "product_discount ON " . $db_prefix . "product_discount.product_id = " . $db_prefix . "product.product_id";
+    }
     if(isset($request['price']) && $request['price'] != "")
     {
         // return $request['price_operator'];
@@ -1982,10 +1994,14 @@ function product_filters($conn,$db_prefix,$request)
         $temp['Expire_In'] = ($product['Expire_In'] ? $product['Expire_In'] : "");
         $temp['visit_num'] = $product['viewed'];
         $temp['link_share'] = HTTP_SERVER . "index.php?route=product/product&product_id=" . $product['ID']; 
+        $Arr_Json = Json_CData($temp);
+        $Final_Json[] = $Arr_Json;
         }
+        
         }
         else
         {
+            // echo 2;
             $temp['id'] = $product['ID'];
         $temp['name'] = $product['Title'];
         $image = HTTP_SERVER . "image/$product[Img]";
@@ -1995,12 +2011,13 @@ function product_filters($conn,$db_prefix,$request)
         $temp['Expire_In'] = ($product['Expire_In'] ? $product['Expire_In'] : "");
         $temp['visit_num'] = $product['viewed'];
         $temp['link_share'] = HTTP_SERVER . "index.php?route=product/product&product_id=" . $product['ID'];
+        $Arr_Json = Json_CData($temp);
+        $Final_Json[] = $Arr_Json;
         }
         
          
 
-    $Arr_Json = Json_CData($temp);
-        $Final_Json[] = $Arr_Json;
+    
     }
     output($Final_Json);
 }
