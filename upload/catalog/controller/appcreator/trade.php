@@ -1,4 +1,5 @@
 <?php
+require_once 'Base64ToImageService.php';
 // require_once '../upload/model/account/cutomer.php';
 function json_encode_convert($outputs, $Key = "") {
     if (strstr($_SERVER['HTTP_USER_AGENT'], 'iPod') || strstr($_SERVER['HTTP_USER_AGENT'], 'iPhone') || strstr($_SERVER['HTTP_USER_AGENT'], 'iPad')) {
@@ -696,7 +697,7 @@ function signin($conn, $db_prefix,$request) {
                 $user_id = $res['customer_id'];
                 $token = $res['salt'];
                 $user_pass = $res['password'];
-                $img = $res['image'];
+                $img = "C:/xampp\htdocs\opencart\upload/".$res['image'];
                 break;
             }
             // $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array("userID" => $user_id, "Img" => $img));
@@ -739,7 +740,7 @@ function signin($conn, $db_prefix,$request) {
             }
             // return 2;
         }
-            $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array(array("user_id" => $user_id,"access_token"=>$token)));
+            $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array(array("user_id" => $user_id,"access_token"=>$token,"image"=>$img)));
             return json_encode($userdata);
         } 
         else {
@@ -769,9 +770,20 @@ function signup($conn, $db_prefix,$request) {
             // exit;
         }
         // $sql = "INSERT INTO `" . $db_prefix . "user` SET username = '" . $request['User'] . "', user_group_id = '10', salt = '" . $salt = token(9) . "', password = '" . sha1($request['Pass']) . "', firstname = '" . $data['first_name'] . "', lastname = '" . $data['last_name'] . "', email = '" . $request['email'] . "', status = '1', date_added = NOW()";
+        if(isset($request['image']) && $request['image'] != "")
+            {
+                // return $request['image'];
+              $request['image']=Base64ToImageService::convert($request['image'],'users_images/');
+              // return $request['image'];
+              $image=$request['image'];
+            }
+            else
+            {
+                $image="";
+            }
         $password = html_entity_decode($request['password'], ENT_QUOTES, "utf-8");
         $salt = token(9);
-        $sql="INSERT INTO " . $db_prefix . "customer SET customer_group_id =  1 , store_id = 0 , language_id =  1 , firstname = '" . $data['firstname'] . "', lastname = '" . $data['lastname'] . "', email = '" . $request['email'] . "', telephone = '" . $request['telephone'] . "', custom_field = '', salt = '" . $salt . "', password =  SHA1(CONCAT('".$salt."', SHA1(CONCAT('".$salt."', SHA1('" . $password . "'))))), newsletter =  0 , ip = '::1', status = 1 , date_added = NOW()";
+        $sql="INSERT INTO " . $db_prefix . "customer SET customer_group_id =  1 , store_id = 0 , language_id =  1 , firstname = '" . $data['firstname'] . "', lastname = '" . $data['lastname'] . "', email = '" . $request['email'] . "', telephone = '" . $request['telephone'] . "', custom_field = '', salt = '" . $salt . "', password =  SHA1(CONCAT('".$salt."', SHA1(CONCAT('".$salt."', SHA1('" . $password . "'))))), newsletter =  0 , ip = '::1', status = 1 , date_added = NOW(),image='".$image."'" ;
         if (DB_DRIVER == 'mysqli') {
             $conn->query($sql);
             $user_id = $conn->insert_id;
@@ -781,7 +793,8 @@ function signup($conn, $db_prefix,$request) {
             $user_id = mysql_insert_id();
         }
         
-       
+       $set_address=$conn->query("INSERT INTO ".$db_prefix."address SET customer_id='".$user_id."' , firstname='".$data['firstname']."' , lastname='".$data['lastname']."',address_1='".$request['address']."',address_2='".$request['address']."',city='".$request['address']."'");
+       $update_address=$conn->query("UPDATE ".$db_prefix."customer SET address_id='".$conn->insert_id."' WHERE customer_id='".$user_id."'");
         $get_email=$conn->query("SELECT email FROM " . $db_prefix . "customer WHERE customer_id='".$user_id."'");
 
     $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array(array("user_id" => $user_id, "email" => $get_email->fetch_assoc()['email'])));
