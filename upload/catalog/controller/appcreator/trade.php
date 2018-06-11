@@ -842,7 +842,15 @@ function edit_profile($conn,$db_prefix,$request)
 
     }
     else {
-        $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array());
+        if(isset($request['lang_id']) && $request['lang_id'] == 2)
+        {
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array()); 
+        }
+        else
+        {
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again")), "content" => array()); 
+        }
+        
         return json_encode($userdata);
     }
  }
@@ -895,7 +903,15 @@ function profile($conn, $db_prefix,$request) {
             }
         }
     } else {
-        $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array());
+        if(isset($request['lang_id']) && $request['lang_id'] == 2)
+        {
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array()); 
+        }
+        else
+        {
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again")), "content" => array()); 
+        }
+        
         return json_encode($userdata);
     }
 }
@@ -943,7 +959,15 @@ function Shopping_cart($conn, $db_prefix,$request) {
         return json_encode($userdata);
     }
     } else {
-        $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array());
+       if(isset($request['lang_id']) && $request['lang_id'] == 2)
+        {
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array()); 
+        }
+        else
+        {
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again")), "content" => array()); 
+        }
+        
         return json_encode($userdata);
     }
 }
@@ -973,7 +997,15 @@ function Add_To_Shopping_Cart($conn, $db_prefix,$request) {
             return json_encode($userdata);
         }
     } else {
-        $userdata = array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array());
+        if(isset($request['lang_id']) && $request['lang_id'] == 2)
+        {
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array()); 
+        }
+        else
+        {
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again")), "content" => array()); 
+        }
+        
         return json_encode($userdata);
     }
 }
@@ -992,7 +1024,15 @@ function Remove_From_Shopping_Cart($conn, $db_prefix,$request) {
             return json_encode($userdata);
         }
     } else {
-        $userdata = array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array());
+        if(isset($request['lang_id']) && $request['lang_id'] == 2)
+        {
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array()); 
+        }
+        else
+        {
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again")), "content" => array()); 
+        }
+        
         return json_encode($userdata);
     }
 }
@@ -1028,7 +1068,15 @@ function checkout($conn,$db_prefix,$data)
         
     }
     else {
-        $userdata = array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array());
+       if(isset($request['lang_id']) && $request['lang_id'] == 2)
+        {
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array()); 
+        }
+        else
+        {
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again")), "content" => array()); 
+        }
+        
         return json_encode($userdata);
     }
 
@@ -1809,7 +1857,15 @@ function contactus($conn,$db_prefix,$request)
         //     $userdata = array("status" => array("code"=>1,"message"=>"Validation error","error_details"=>array(" name and email required")), "content" => array());
         //     return json_encode($userdata);
         // }
-        $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array());
+        if(isset($request['lang_id']) && $request['lang_id'] == 2)
+        {
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array()); 
+        }
+        else
+        {
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again")), "content" => array()); 
+        }
+        
         return json_encode($userdata);
 
     }
@@ -1839,7 +1895,15 @@ function add_to_wishlist($conn,$db_prefix,$request)
         }
         else
         {
-            $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array());
+            if(isset($request['lang_id']) && $request['lang_id'] == 2)
+        {
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array()); 
+        }
+        else
+        {
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again")), "content" => array()); 
+        }
+        
         return json_encode($userdata);
         }
 
@@ -1882,7 +1946,15 @@ function wishlist($conn,$db_prefix,$request)
         return json_encode($userdata);
     }
     } else {
-        $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array());
+        if(isset($request['lang_id']) && $request['lang_id'] == 2)
+        {
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array()); 
+        }
+        else
+        {
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again")), "content" => array()); 
+        }
+        
         return json_encode($userdata);
     }
 }
@@ -1898,7 +1970,15 @@ function remove_from_wishlist($conn,$db_prefix,$request)
         return json_encode($userdata);
     }
      else { 
-            $userdata = array("status" => array("code"=>404,"message"=>"invalid wishlist item ","error_details"=>array( "product not found!")), "content" => array());
+        if(isset($request['lang_id']) && $request['lang_id'] == 2)
+        {
+            $userdata = array("status" => array("code"=>404,"message"=>"هذه الايتيمز غير موجوده  ","error_details"=>array( "هذا المنتج غير موجود فى ا المفضله!")), "content" => array());
+        }
+        else
+        {
+            $userdata = array("status" => array("code"=>404,"message"=>"invalid wishlist item ","error_details"=>array( "product not found!")), "content" => array()); 
+        }
+           
             return json_encode($userdata);
         }
         
@@ -1906,7 +1986,15 @@ function remove_from_wishlist($conn,$db_prefix,$request)
         }
         else
         {
-            $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array());
+            if(isset($request['lang_id']) && $request['lang_id'] == 2)
+        {
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array()); 
+        }
+        else
+        {
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again")), "content" => array()); 
+        }
+        
         return json_encode($userdata);
         }
 
@@ -1973,7 +2061,15 @@ function product_offers($conn,$db_prefix,$request)
         }
         else
         {
-           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array());
+          if(isset($request['lang_id']) && $request['lang_id'] == 2)
+        {
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array()); 
+        }
+        else
+        {
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again")), "content" => array()); 
+        }
+        
         return json_encode($userdata); 
         }
 
