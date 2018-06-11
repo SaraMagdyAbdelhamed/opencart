@@ -93,6 +93,11 @@ switch($action) {
             $result=signin($conn,$db_prefix,$request);
             echo $result;exit;
     break;
+    case "66":
+            // http_response_code(200);
+            $result=edit_profile($conn,$db_prefix,$request);
+            echo $result;exit;
+    break;
     case "60":
             // http_response_code(200);
             $result=change_password($conn,$db_prefix,$request);

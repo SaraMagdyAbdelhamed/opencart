@@ -666,7 +666,8 @@ function Store_Comment_List($conn, $db_prefix,$request) {
     //exit;
 }
 
-function signin($conn, $db_prefix,$request) {
+function signin($conn, $db_prefix,$request) 
+{
     // var_dump($request['Pass']);exit;
     // $validator = new Validator;
     if (isset($request['email']) && !empty($request['email']) && isset($request['password']) && !empty($request['password']))
@@ -754,7 +755,7 @@ function signin($conn, $db_prefix,$request) {
         return json_encode($userdata);
     }
 }
-
+ 
 function signup($conn, $db_prefix,$request) {
     if (isset($request['email']) && !empty($request['email']) && isset($request['password']) && !empty($request['password'])) {
         // $this->load->model('account/cutomer');
@@ -805,6 +806,46 @@ function signup($conn, $db_prefix,$request) {
     }
 }
 
+
+function edit_profile($conn,$db_prefix,$request)
+ {
+    // return getallheaders()["access-token"];
+    $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_token='".getallheaders()["access-token"]."'");
+    if ($query_token->num_rows == 1) 
+    {
+
+        $user_id=$query_token->fetch_assoc()['user_id'];
+        // return $user_id;
+        if(isset($request['image']) && $request['image'] != "")
+            {
+                 // return $request['image'];
+              $request['image']=Base64ToImageService::convert($request['image'],'users_images/');
+              // return $request['image'];
+              $image=$request['image'];
+            }
+            else
+            {
+                $image="";
+            }
+            $edit_address=$conn->query("UPDATE ".$db_prefix."address SET firstname='".$request['first_name']."' , lastname = '".$request['family_name']."' , address_1='".$request['address']."' WHERE customer_id='".$user_id."'");
+            $edit_profile = $conn->query("UPDATE ".$db_prefix."customer SET firstname='".$request['first_name']."' , lastname = '".$request['family_name']."' , email='".$request['email']."',image='".$image."' , telephone = '".$request['phone']."' WHERE customer_id='".$user_id."'");
+            if($edit_profile)
+            {
+              $userdata =  array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array(array("user_id"=>$user_id)));
+         
+            }
+            else
+            {
+ $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "error while editing data")), "content" => array());
+            }
+            return json_encode($userdata); 
+
+    }
+    else {
+        $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array());
+        return json_encode($userdata);
+    }
+ }
 function profile($conn, $db_prefix,$request) {
     // session_start();
       // echo ($session);exit();
