@@ -169,6 +169,10 @@ switch($action) {
            $result= product_search($conn,$db_prefix,$request);
            echo $result;exit;
     break;
+     case "81":
+           $result= product_comment_list($conn,$db_prefix,$request);
+           echo $result;exit;
+    break;
 	}
 }
 ?>
