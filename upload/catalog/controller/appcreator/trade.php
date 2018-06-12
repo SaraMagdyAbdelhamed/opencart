@@ -1,5 +1,6 @@
 <?php
 require_once 'Base64ToImageService.php';
+require_once 'validation.php';
 // require_once '../upload/model/account/cutomer.php';
 function json_encode_convert($outputs, $Key = "") {
     if (strstr($_SERVER['HTTP_USER_AGENT'], 'iPod') || strstr($_SERVER['HTTP_USER_AGENT'], 'iPhone') || strstr($_SERVER['HTTP_USER_AGENT'], 'iPad')) {
@@ -43,6 +44,7 @@ function Product_List_View($conn, $db_prefix,$request) {
     $Final_Json = array();
     foreach ($Product_List as $product) 
     {
+        $temp['has_discount']=product_discount_list($conn,$db_prefix,$product['ID'] );
         $temp['comment_list']=product_comment_list($conn,$db_prefix,$product['ID']);
         // return $temp['comment_list'][1]['rating'];
         $temp['id'] = $product['ID'];
@@ -672,6 +674,10 @@ function signin($conn, $db_prefix,$request)
 {
     // var_dump($request['Pass']);exit;
     // $validator = new Validator;
+     if( validate($request))
+     {
+        return validate($request);
+     }
     if (isset($request['email']) && !empty($request['email']) && isset($request['password']) && !empty($request['password']))
      {
         $email = $request['email'];
@@ -743,16 +749,16 @@ function signin($conn, $db_prefix,$request)
             }
             // return 2;
         }
-            $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array(array("user_id" => $user_id,"access_token"=>$token,"image"=>$img)));
+            $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array(),"validation_errors"=>array()), "content" => array(array("user_id" => $user_id,"access_token"=>$token,"image"=>$img)));
             return json_encode($userdata);
         } 
         else {
             if(isset($request['lang_id']) && $request['lang_id'] == 2)
             {
-$userdata = array("status" => array("code"=>2,"message"=>"error","error_details"=>array("البريد  الالكترونى او  رقم السر خطأ برجاء التأكد من البيانات ")), "content" => array());
+$userdata = array("status" => array("code"=>2,"message"=>"error","error_details"=>array("البريد  الالكترونى او  رقم السر خطأ برجاء التأكد من البيانات "),"validation_errors"=>array()), "content" => array());
             }
             else{
-                $userdata = array("status" => array("code"=>2,"message"=>"error","error_details"=>array("wrong email or password")), "content" => array());
+                $userdata = array("status" => array("code"=>2,"message"=>"error","error_details"=>array("wrong email or password"),"validation_errors"=>array()), "content" => array());
             }
             
             return json_encode($userdata);
@@ -762,11 +768,11 @@ $userdata = array("status" => array("code"=>2,"message"=>"error","error_details"
     else {
          if(isset($request['lang_id']) && $request['lang_id'] == 2)
         {
-           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array()); 
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك"),"validation_errors"=>array()), "content" => array()); 
         }
         else
         {
-           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again")), "content" => array()); 
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again"),"validation_errors"=>array()), "content" => array()); 
         }
         return json_encode($userdata);
     }
@@ -784,11 +790,11 @@ function signup($conn, $db_prefix,$request) {
         if ($check_user != "") {
             if(isset($request['lang_id']) && $request['lang_id'] == 2)
             {
-              $userdata = array("status" => array("code"=>2,"message"=>"error","error_details"=>array("هذا المستخدم موجود بالفعل")), "content" => array());  
+              $userdata = array("status" => array("code"=>2,"message"=>"error","error_details"=>array("هذا المستخدم موجود بالفعل"),"validation_errors"=>array()), "content" => array());  
             }
             else
             {
-                $userdata = array("status" => array("code"=>2,"message"=>"error","error_details"=>array("this user is already exit")), "content" => array());
+                $userdata = array("status" => array("code"=>2,"message"=>"error","error_details"=>array("this user is already exit"),"validation_errors"=>array()), "content" => array());
             }
             
             return json_encode($userdata);
@@ -822,16 +828,16 @@ function signup($conn, $db_prefix,$request) {
        $update_address=$conn->query("UPDATE ".$db_prefix."customer SET address_id='".$conn->insert_id."' WHERE customer_id='".$user_id."'");
         $get_email=$conn->query("SELECT email FROM " . $db_prefix . "customer WHERE customer_id='".$user_id."'");
 
-    $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array(array("user_id" => $user_id, "email" => $get_email->fetch_assoc()['email'])));
+    $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array(),"validation_errors"=>array()), "content" => array(array("user_id" => $user_id, "email" => $get_email->fetch_assoc()['email'])));
         return json_encode($userdata);
     } else {
         if(isset($request['lang_id']) && $request['lang_id']==2)
         {
-           $userdata = array("status" => array("code"=>2,"message"=>"Error!","error_details"=>array("تسجيل المستخدم خاطئ")), "content" => array());  
+           $userdata = array("status" => array("code"=>2,"message"=>"Error!","error_details"=>array("تسجيل المستخدم خاطئ"),"validation_errors"=>array()), "content" => array());  
         }
         else
         {
-        $userdata = array("status" => array("code"=>2,"message"=>"Error!","error_details"=>array("wrong data")), "content" => array());
+        $userdata = array("status" => array("code"=>2,"message"=>"Error!","error_details"=>array("wrong data"),"validation_errors"=>array()), "content" => array());
     }
         return json_encode($userdata);
     }
@@ -862,18 +868,18 @@ function edit_profile($conn,$db_prefix,$request)
             $edit_profile = $conn->query("UPDATE ".$db_prefix."customer SET firstname='".$request['first_name']."' , lastname = '".$request['family_name']."' , email='".$request['email']."',image='".$image."' , telephone = '".$request['phone']."' WHERE customer_id='".$user_id."'");
             if($edit_profile)
             {
-              $userdata =  array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array(array("user_id"=>$user_id)));
+              $userdata =  array("status" => array("code"=>200,"message"=>"success","error_details"=>array(),"validation_errors"=>array()), "content" => array(array("user_id"=>$user_id)));
          
             }
             else
             {
                 if(isset($request['lang_id']) && $request['lang_id'] == 2)
                 {
-                $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "حدث خطأ اثناء تعديل البيانات فى الداتا بيز")), "content" => array());
+                $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "حدث خطأ اثناء تعديل البيانات فى الداتا بيز"),"validation_errors"=>array()), "content" => array());
                 }
                 else
                 {
-                  $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "error while editing data")), "content" => array());  
+                  $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "error while editing data"),"validation_errors"=>array()), "content" => array());  
                 }
  
             }
@@ -883,11 +889,11 @@ function edit_profile($conn,$db_prefix,$request)
     else {
         if(isset($request['lang_id']) && $request['lang_id'] == 2)
         {
-           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array()); 
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك"),"validation_errors"=>array()), "content" => array()); 
         }
         else
         {
-           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again")), "content" => array()); 
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again"),"validation_errors"=>array()), "content" => array()); 
         }
         
         return json_encode($userdata);
@@ -944,11 +950,11 @@ function profile($conn, $db_prefix,$request) {
     } else {
         if(isset($request['lang_id']) && $request['lang_id'] == 2)
         {
-           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array()); 
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك"),"validation_errors"=>array()), "content" => array()); 
         }
         else
         {
-           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again")), "content" => array()); 
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again"),"validation_errors"=>array()), "content" => array()); 
         }
         
         return json_encode($userdata);
@@ -990,29 +996,29 @@ function Shopping_cart($conn, $db_prefix,$request) {
 
                 }
             }
-             $userdata =  array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array(array("products"=>$products,"sub_total"=>$sub_total,"shipping"=>0,"vat"=>0,"total"=>$sub_total,"restaurant_delivery_methods"=>array())));
+             $userdata =  array("status" => array("code"=>200,"message"=>"success","error_details"=>array(),"validation_errors"=>array()), "content" => array(array("products"=>$products,"sub_total"=>$sub_total,"shipping"=>0,"vat"=>0,"total"=>$sub_total,"restaurant_delivery_methods"=>array())));
         return json_encode($userdata);
         }
         else {
             if(isset($request['lang_id']) && $request['lang_id'] == 2)
         {
-        $userdata =  array("status" => array("code"=>204,"message"=>"No data","error_details"=>array( "لا يوجد بيانات فى الكارت")), "content" => array());
+        $userdata =  array("status" => array("code"=>204,"message"=>"No data","error_details"=>array( "لا يوجد بيانات فى الكارت"),"validation_errors"=>array()), "content" => array());
     }
     else
     {
 
-         $userdata =  array("status" => array("code"=>204,"message"=>"No data","error_details"=>array( "cart is empty")), "content" => array());
+         $userdata =  array("status" => array("code"=>204,"message"=>"No data","error_details"=>array( "cart is empty"),"validation_errors"=>array()), "content" => array());
     }
     return json_encode($userdata);
     }
     } else {
        if(isset($request['lang_id']) && $request['lang_id'] == 2)
         {
-           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array()); 
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك"),"validation_errors"=>array()), "content" => array()); 
         }
         else
         {
-           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again")), "content" => array()); 
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again"),"validation_errors"=>array()), "content" => array()); 
         }
         
         return json_encode($userdata);
@@ -1034,19 +1040,19 @@ function Add_To_Shopping_Cart($conn, $db_prefix,$request) {
         else
         {
 
-            $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("action id and item id required")), "content" => array());
+            $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("action id and item id required"),"validation_errors"=>array()), "content" => array());
                 return json_encode($userdata);
         }
-            $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()),  "content" => array(array("product_id"=>$request['item_id'])));
+            $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array(),"validation_errors"=>array()),  "content" => array(array("product_id"=>$request['item_id'])));
             return json_encode($userdata);
         } else {
             if(isset($request['lang_id']) && $request['lang_id']==2)
             {
-              $userdata = array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "فشلت العملية")), "content" => array());  
+              $userdata = array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "فشلت العملية"),"validation_errors"=>array()), "content" => array());  
             }
             else
             {
-                $userdata = array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "operation failed")), "content" => array());
+                $userdata = array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "operation failed"),"validation_errors"=>array()), "content" => array());
             }
             
             return json_encode($userdata);
@@ -1054,11 +1060,11 @@ function Add_To_Shopping_Cart($conn, $db_prefix,$request) {
     } else {
         if(isset($request['lang_id']) && $request['lang_id'] == 2)
         {
-           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array()); 
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك"),"validation_errors"=>array()), "content" => array()); 
         }
         else
         {
-           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again")), "content" => array()); 
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again"),"validation_errors"=>array()), "content" => array()); 
         }
         
         return json_encode($userdata);
@@ -1077,11 +1083,11 @@ function Remove_From_Shopping_Cart($conn, $db_prefix,$request) {
         } else {
             if(isset($request['lang_id']) && $request['lang_id']==2)
             {
-               $userdata = array("status" => array("code"=>404,"message"=>"invalid cart item ","error_details"=>array( "هذا المنتج ليس موجود!")), "content" => array()); 
+               $userdata = array("status" => array("code"=>404,"message"=>"invalid cart item ","error_details"=>array( "هذا المنتج ليس موجود!"),"validation_errors"=>array()), "content" => array()); 
             }
             else
             {
-              $userdata = array("status" => array("code"=>404,"message"=>"invalid cart item ","error_details"=>array( "product not found!")), "content" => array());  
+              $userdata = array("status" => array("code"=>404,"message"=>"invalid cart item ","error_details"=>array( "product not found!"),"validation_errors"=>array()), "content" => array());  
             }
             
             return json_encode($userdata);
@@ -1089,11 +1095,11 @@ function Remove_From_Shopping_Cart($conn, $db_prefix,$request) {
     } else {
         if(isset($request['lang_id']) && $request['lang_id'] == 2)
         {
-           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array()); 
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك"),"validation_errors"=>array()), "content" => array()); 
         }
         else
         {
-           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again")), "content" => array()); 
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again"),"validation_errors"=>array()), "content" => array()); 
         }
         
         return json_encode($userdata);
@@ -1127,12 +1133,12 @@ function checkout($conn,$db_prefix,$data)
               $c=$conn->query("INSERT INTO ".$db_prefix."order_product SET order_id='".$checkout_id."' , product_id='".$value['product_id']."',name='".$value['name']."',model='".$value['model']."',quantity='".$value['quantity']."',price='".$value['price']."',total='".$value['price']*$value['quantity']."'");
               // var_dump($c);die;
             }
-            $order_data = array("status" => array("code"=>200,"message"=>"success","error_details"=>array( "")), "content" => array(array("checkout_id"=>$checkout_id ,"user_name"=>$customer['firstname'],"total_price"=>$data['total_price'],"store"=>$store['name'])));
+            $order_data = array("status" => array("code"=>200,"message"=>"success","error_details"=>array( ),"validation_errors"=>array()), "content" => array(array("checkout_id"=>$checkout_id ,"user_name"=>$customer['firstname'],"total_price"=>$data['total_price'],"store"=>$store['name'])));
         return json_encode($order_data);
         }
         else
         {
-           $userdata = array("status" => array("code"=>422,"message"=>"cart items did not exist","error_details"=>array( "Error happened, please try again")), "content" => array());
+           $userdata = array("status" => array("code"=>422,"message"=>"cart items did not exist","error_details"=>array( "Error happened, please try again"),"validation_errors"=>array()), "content" => array());
         return json_encode($userdata); 
         }
 
@@ -1141,11 +1147,11 @@ function checkout($conn,$db_prefix,$data)
     else {
        if(isset($request['lang_id']) && $request['lang_id'] == 2)
         {
-           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array()); 
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك"),"validation_errors"=>array()), "content" => array()); 
         }
         else
         {
-           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again")), "content" => array()); 
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again"),"validation_errors"=>array()), "content" => array()); 
         }
         
         return json_encode($userdata);
@@ -1181,7 +1187,7 @@ function get_stores($conn,$db_prefix,$request)
         // $stores= array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array("stores" => mysqli_fetch_all($query, MYSQLI_ASSOC)));
         // return json_encode($stores);
     } else {
-        $stores = array("status" => array("code"=>204,"message"=>"No data","error_details"=>array("no data found")), "content" => array());
+        $stores = array("status" => array("code"=>204,"message"=>"No data","error_details"=>array("no data found"),"validation_errors"=>array()), "content" => array());
             return json_encode($stores);
     }
 }
@@ -1301,7 +1307,7 @@ function getSetting($conn, $db_prefix, $store_id, $key) {
 //     return $Setting;
 // }
 
-function Json_Basic_Data($output,$Others_Data,$comment_list) {
+function Json_Basic_Data($output,$Others_Data,$comment_list,$discount) {
 
     $Arr['id'] = "$output[id]";
     $Arr['name'] = "$output[name]";
@@ -1325,6 +1331,7 @@ function Json_Basic_Data($output,$Others_Data,$comment_list) {
     $Arr['media'] += $output['videos'];
     $Arr['more'] =$Others_Data;
     $Arr['comment_list']=$comment_list;
+    $Arr['discount']=$discount;
     return $Arr;
 }
 
@@ -1351,15 +1358,23 @@ function Json_Others_Data($output,$Others_Data) {
    
            if(isset($output['price']))
     {
-        $array['value'][]=array("id"=>'',"parameter"=>"","name"=>'price',"value"=>array("value_type"=>"normal","value_string"=>$output['price']),"dkv_id"=>"","title"=>"","des"=>"","setting_id"=>"");
+        $array['value'][]=array("id"=>'',"parameter"=>"price","name"=>'price',"value"=>array("value_type"=>"normal","value_string"=>$output['price']),"dkv_id"=>"","title"=>"","des"=>"","setting_id"=>"");
     }
        if(isset($output['rate']))
     {
-        $array['value'][]=array("id"=>'',"parameter"=>"","name"=>'rate',"value"=>array("value_type"=>"normal","value_string"=>$output['rate']),"dkv_id"=>"","title"=>"","des"=>"","setting_id"=>"");
+        $array['value'][]=array("id"=>'',"parameter"=>"rate","name"=>'rate',"value"=>array("value_type"=>"normal","value_string"=>$output['rate']),"dkv_id"=>"","title"=>"","des"=>"","setting_id"=>"");
     }
     if(isset($output['price_currency']))
     {
-        $array['value'][]=array("id"=>'',"parameter"=>"","name"=>'price_currency',"value"=>array("value_type"=>"normal","value_string"=>$output['price_currency']),"dkv_id"=>"","title"=>"","des"=>"","setting_id"=>"");
+        $array['value'][]=array("id"=>'',"parameter"=>"price_currency","name"=>'price_currency',"value"=>array("value_type"=>"normal","value_string"=>$output['price_currency']),"dkv_id"=>"","title"=>"","des"=>"","setting_id"=>"");
+    }
+     if(isset($output['has_discount']))
+    {
+        $array['value'][]=array("id"=>'',"parameter"=>"has_offer","name"=>'has_offer',"value"=>array("value_type"=>"normal","value_string"=>$output['has_discount']),"dkv_id"=>"","title"=>"","des"=>"","setting_id"=>"");
+    }
+    if(isset($output['has_sub']))
+    {
+        $array['value'][]=array("id"=>'',"parameter"=>"has_sub_categories","name"=>'has_sub_categories',"value"=>array("value_type"=>"normal","value_string"=>$output['has_sub']),"dkv_id"=>"","title"=>"","des"=>"","setting_id"=>"");
     }
         // $array['value']=array(array("id"=>0,"parameter"=>"","name"=>"","value"=>array("value_type"=>"normal","value_string"=>""),"dkv_id"=>"","title"=>"","des"=>"","setting_id"=>""));
     
@@ -1405,8 +1420,8 @@ function Json_Action_Creat($Arr_Basc_Data, $Arr_Advanced_Data = array(), $Arr_Se
     return $Arr_Basc_Data;
 }
 
-function Json_CData($output, $Others_Data = array(), $Key_Value = array()) {
-    $Arr_Basc_Data = Json_Basic_Data($output,Json_Others_Data($output,$Others_Data),$Key_Value);
+function Json_CData($output, $Others_Data = array(), $Key_Value = array(),$discount =array()) {
+    $Arr_Basc_Data = Json_Basic_Data($output,Json_Others_Data($output,$Others_Data),$Key_Value,$discount);
     // $Arr_Setting_Data = Json_Arr_Setting($output['Target_Action_ID'], $output['Target_Layout_ID'], $output['Havesub'], $output['Api'], $output['Key'], $output['Dialog'], $output['Color'], $output['Footer']);
     // $Arr_Stat_Data = Json_Stat_Data($output['Visit_Num'], $output['Comment_Num']);
     // $Arr_Advanced_Data = Json_Advanced_Data($output['Dept'], $output['Source'], $output['Shop'], $output['Model'], $output['User'], $output['Content_Json'], $output['Author']);
@@ -1494,12 +1509,12 @@ function output($result) {
     header('Content-Type: application/json; charset=utf-8');
     if (strstr($_SERVER['HTTP_USER_AGENT'], 'iPod') || strstr($_SERVER['HTTP_USER_AGENT'], 'iPhone') || strstr($_SERVER['HTTP_USER_AGENT'], 'iPad')) {
         foreach ($result as $key => $value) {
-            $product = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => $value);
+            $product = array("status" => array("code"=>200,"message"=>"success","error_details"=>array(),"validation_errors"=>array()), "content" => $value);
             echo json_encode($product, 256);
             break;
         }
     } else {
-        $product = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => $result);
+        $product = array("status" => array("code"=>200,"message"=>"success","error_details"=>array(),"validation_errors"=>array()), "content" => $result);
         echo json_encode($product, 256);
     }
     exit();
@@ -1607,27 +1622,27 @@ $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_
     if ($query)
          {
 
-        $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array(array("user_id" => $user_id)));
+        $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array(),"validation_errors"=>array()), "content" => array(array("user_id" => $user_id)));
             return json_encode($userdata);
          }
     return false;
             }
             else
             {
-                $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("new password and confirm password doesn't match")), "content" => array());
+                $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("new password and confirm password doesn't match"),"validation_errors"=>array()), "content" => array());
             return json_encode($userdata);
             }
             
         }
         else
         {
-            $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("wrong password!")), "content" => array());
+            $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("wrong password!"),"validation_errors"=>array()), "content" => array());
             return json_encode($userdata);
         }
     }
     else
     {
-        $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("please login and try again!")), "content" => array());
+        $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("please login and try again!"),"validation_errors"=>array()), "content" => array());
             return json_encode($userdata);
     }
 }
@@ -1640,7 +1655,7 @@ function logout($conn, $db_prefix,$request)
          $query = $conn->query("DELETE FROM " . $db_prefix . "api_tokens WHERE api_token = '" . getallheaders()["access-token"] . "' ");
     if ($query) {
 
-        $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array(array("user_id" => $user_id)));
+        $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array(),"validation_errors"=>array()), "content" => array(array("user_id" => $user_id)));
             return json_encode($userdata);
     }
     return false;
@@ -1648,7 +1663,7 @@ function logout($conn, $db_prefix,$request)
     }
     else
     {
-        $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("please login and try again!")), "content" => array());
+        $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("please login and try again!"),"validation_errors"=>array()), "content" => array());
             return json_encode($userdata);
     }
     
@@ -1680,12 +1695,12 @@ $mail->setText("welcome to opencart");
 
 if($mail->send())
 {
-    $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array());
+    $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array(),"validation_errors"=>array()), "content" => array());
             return json_encode($userdata);
 }
 else
 {
-    $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("please error sending email")), "content" => array());
+    $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("please error sending email"),"validation_errors"=>array()), "content" => array());
      return json_encode($userdata);
 }
 }
@@ -1702,18 +1717,18 @@ function Product_Action($conn, $db_prefix,$request)
            $query_actions = $conn->query("INSERT INTO ". $db_prefix ."users_actions SET product_id='".$request["product_id"]."', action_id='".$request["action_id"]."' , user_id='".$user_id."'");
             if($query)
             { 
-                $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array(array("user_id" => $user_id)));
+                $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array(),"validation_errors"=>array()), "content" => array(array("user_id" => $user_id)));
                 return json_encode($userdata);
             }
             else
             {
-               $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("error while insert data")), "content" => array());
+               $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("error while insert data"),"validation_errors"=>array()), "content" => array());
                 return json_encode($userdata);
             } 
         }
         else
         {
-            $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("action id and product id required")), "content" => array());
+            $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("action id and product id required"),"validation_errors"=>array()), "content" => array());
                 return json_encode($userdata);
         }
         
@@ -1722,7 +1737,7 @@ function Product_Action($conn, $db_prefix,$request)
     }
     else
     {
-        $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("product id and action id are required")), "content" => array());
+        $userdata = array("status" => array("code"=>1,"message"=>"Error!","error_details"=>array("product id and action id are required"),"validation_errors"=>array()), "content" => array());
             return json_encode($userdata);
     }
 
@@ -1767,17 +1782,15 @@ function Category_Product($conn,$db_prefix,$request)
         if($sub->fetch_assoc()['count'] > 0)
         {
             // return $sub->fetch_assoc();
-            $temp['Data'][1]['ID']=1;
-            $temp['Data'][1]['Key']='has_sub';
-            $temp['Data'][1]['Value']='1';
+            
+            $temp['has_sub']=1;
+            
             // return $temp['Data'];
             $has_sub=1;
         }
         else
         {
-            $temp['Data'][1]['ID']=1;
-            $temp['Data'][1]['Key']='has_sub';
-            $temp['Data'][1]['Value']='0';
+           $temp['has_sub']=0;
             $has_sub=0;
         }
         $temp['id'] = $Category['ID'];
@@ -1944,7 +1957,7 @@ function submit_review($conn,$db_prefix,$request)
          $status=$res['status'];
         
  
-             $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array(array("id" => $id,"user_id"=>$user_id,"rating"=>$rate,"review"=>$res['text'],"status_id"=>$status,"created_at"=>$date_added)) );
+             $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array(),"validation_errors"=>array()), "content" => array(array("id" => $id,"user_id"=>$user_id,"rating"=>$rate,"review"=>$res['text'],"status_id"=>$status,"created_at"=>$date_added)) );
                 return json_encode($userdata);
 
 }
@@ -1959,6 +1972,24 @@ function contactus($conn,$db_prefix,$request)
             $customer=$conn->query("SELECT * FROM ". $db_prefix ."customer WHERE customer_id='".$user_id."'");
             $name=$customer->fetch_assoc()['firstname'];
             $email=$customer->fetch_assoc()['email'];
+            if(isset($request['message']) && $request['message'] != "")
+            {
+               $message=$request['message']; 
+            }
+            else
+            {
+                if(isset($request['lang_id']) && $request['lang_id'] == 2)
+        {
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء ارسال الرساله "),"validation_errors"=>array()), "content" => array()); 
+        }
+        else
+        {
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please send message in request"),"validation_errors"=>array()), "content" => array()); 
+        }
+        
+        return json_encode($userdata);
+            }
+            
         } 
     }
    else
@@ -1975,17 +2006,17 @@ function contactus($conn,$db_prefix,$request)
         // }
         if(isset($request['lang_id']) && $request['lang_id'] == 2)
         {
-           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array()); 
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك"),"validation_errors"=>array()), "content" => array()); 
         }
         else
         {
-           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again")), "content" => array()); 
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again"),"validation_errors"=>array()), "content" => array()); 
         }
         
         return json_encode($userdata);
 
     }
-    $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array());
+    $userdata = array("status" => array("code"=>200,"message"=>"success","error_details"=>array(),"validation_errors"=>array()), "content" => array());
             return json_encode($userdata);
 }
 
@@ -2006,18 +2037,18 @@ function add_to_wishlist($conn,$db_prefix,$request)
         //     $id = mysql_insert_id();
         // }
         
-            $userdata =  array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array(array("id"=>$request['product_id'])));
+            $userdata =  array("status" => array("code"=>200,"message"=>"success","error_details"=>array(),"validation_errors"=>array()), "content" => array(array("id"=>$request['product_id'])));
         return json_encode($userdata);
         }
         else
         {
             if(isset($request['lang_id']) && $request['lang_id'] == 2)
         {
-           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array()); 
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك"),"validation_errors"=>array()), "content" => array()); 
         }
         else
         {
-           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again")), "content" => array()); 
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again"),"validation_errors"=>array()), "content" => array()); 
         }
         
         return json_encode($userdata);
@@ -2056,6 +2087,7 @@ function wishlist($conn,$db_prefix,$request)
                 foreach ($Product_List as $product) 
             {
                 $temp = array();
+                $temp['has_discount']=product_discount_list($conn,$db_prefix,$product['ID'] );
                 $temp['comment_list']=product_comment_list($conn,$db_prefix,$product['ID']);
                 // return $temp['comment_list'][1]['rating'];
                 $temp['id'] = $product['ID'];
@@ -2104,17 +2136,17 @@ function wishlist($conn,$db_prefix,$request)
         // return json_encode($userdata);
         }
         else {
-        $userdata =  array("status" => array("code"=>204,"message"=>"No data","error_details"=>array( "cart is empty")), "content" => array());
+        $userdata =  array("status" => array("code"=>204,"message"=>"No data","error_details"=>array( "cart is empty"),"validation_errors"=>array()), "content" => array());
         return json_encode($userdata);
     }
     } else {
         if(isset($request['lang_id']) && $request['lang_id'] == 2)
         {
-           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array()); 
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك"),"validation_errors"=>array()), "content" => array()); 
         }
         else
         {
-           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again")), "content" => array()); 
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again"),"validation_errors"=>array()), "content" => array()); 
         }
         
         return json_encode($userdata);
@@ -2128,17 +2160,17 @@ function remove_from_wishlist($conn,$db_prefix,$request)
             $user_id=$query_token->fetch_assoc()['user_id'];
            $query = $conn->query("DELETE FROM " . $db_prefix . "customer_wishlist WHERE customer_id = '" . $user_id . "' AND product_id='" . (int) $request['product_id'] . "';");
     if ($query) {
-         $userdata =  array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" => array());
+         $userdata =  array("status" => array("code"=>200,"message"=>"success","error_details"=>array(),"validation_errors"=>array()), "content" => array());
         return json_encode($userdata);
     }
      else { 
         if(isset($request['lang_id']) && $request['lang_id'] == 2)
         {
-            $userdata = array("status" => array("code"=>404,"message"=>"هذه الايتيمز غير موجوده  ","error_details"=>array( "هذا المنتج غير موجود فى ا المفضله!")), "content" => array());
+            $userdata = array("status" => array("code"=>404,"message"=>"هذه الايتيمز غير موجوده  ","error_details"=>array( "هذا المنتج غير موجود فى ا المفضله!"),"validation_errors"=>array()), "content" => array());
         }
         else
         {
-            $userdata = array("status" => array("code"=>404,"message"=>"invalid wishlist item ","error_details"=>array( "product not found!")), "content" => array()); 
+            $userdata = array("status" => array("code"=>404,"message"=>"invalid wishlist item ","error_details"=>array( "product not found!"),"validation_errors"=>array()), "content" => array()); 
         }
            
             return json_encode($userdata);
@@ -2150,11 +2182,11 @@ function remove_from_wishlist($conn,$db_prefix,$request)
         {
             if(isset($request['lang_id']) && $request['lang_id'] == 2)
         {
-           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array()); 
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك"),"validation_errors"=>array()), "content" => array()); 
         }
         else
         {
-           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again")), "content" => array()); 
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again"),"validation_errors"=>array()), "content" => array()); 
         }
         
         return json_encode($userdata);
@@ -2196,6 +2228,7 @@ function product_offers($conn,$db_prefix,$request)
             $rate = mysql_fetch_assoc($rate_avg);
         }
         $temp['rate']=$rate['rate'];
+        $temp['has_discount']=product_discount_list($conn,$db_prefix,$product['ID'] );
         $temp['comment_list']=product_comment_list($conn,$db_prefix,$product['ID']);
         $discount = $conn->query("SELECT * FROM " . $db_prefix . "product_discount WHERE product_id = '$product[ID]'");
         if($discount->num_rows >0  )
@@ -2239,7 +2272,7 @@ function product_offers($conn,$db_prefix,$request)
                 $t[] = $c;
         }
         $temp['Data'] = $t;
-        $Arr_Json = Json_CData($temp,$temp['Data'],$temp['comment_list']);
+        $Arr_Json = Json_CData($temp,$temp['Data'],$temp['comment_list'],$temp['discount']);
         $Final_Json[] = $Arr_Json;
         }
        
@@ -2251,11 +2284,11 @@ function product_offers($conn,$db_prefix,$request)
         {
           if(isset($request['lang_id']) && $request['lang_id'] == 2)
         {
-           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك")), "content" => array()); 
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "برجاء تسجيل دخولك"),"validation_errors"=>array()), "content" => array()); 
         }
         else
         {
-           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again")), "content" => array()); 
+           $userdata =  array("status" => array("code"=>2,"message"=>"error","error_details"=>array( "please login in and try again"),"validation_errors"=>array()), "content" => array()); 
         }
         
         return json_encode($userdata); 
@@ -2283,7 +2316,7 @@ function product_search($conn,$db_prefix,$request)
         while ($Product = mysql_fetch_assoc($Products))
             $Product_List[] = $Product;
     }
-    $products =  array("status" => array("code"=>200,"message"=>"success","error_details"=>array()), "content" =>array(array("products"=>$Product_List)) );
+    $products =  array("status" => array("code"=>200,"message"=>"success","error_details"=>array(),"validation_errors"=>array()), "content" =>array(array("products"=>$Product_List)) );
         return json_encode($products);
 
 }
@@ -2389,10 +2422,21 @@ function product_filters($conn,$db_prefix,$request)
 }
 function product_comment_list($conn,$db_prefix,$id )
 {
- $get_comment_list_on_product=$conn->query("SELECT image,concat(firstname,lastname) as 'name' , rating,text, ".$db_prefix."review.date_added as 'date_added' 
+ $get_comment_list_on_product=$conn->query("SELECT image,concat(firstname,' ',lastname) as 'name' , rating,text, ".$db_prefix."review.date_added as 'date_added' 
     FROM ".$db_prefix."review 
     INNER JOIN ".$db_prefix."customer ON ".$db_prefix."customer.customer_id=".$db_prefix."review.customer_id WHERE product_id='".$id."'");
   $list=mysqli_fetch_all($get_comment_list_on_product, MYSQLI_ASSOC);
  return $list;
+}
+function product_discount_list($conn,$db_prefix,$id )
+{
+ $get_discount_list_on_product=$conn->query("SELECT *
+    FROM ".$db_prefix."product_discount 
+    WHERE product_id='".$id."'");
+  if($get_discount_list_on_product->num_rows > 0)
+  {
+    return 1;
+  }
+  return 0;
 }
 ?>
