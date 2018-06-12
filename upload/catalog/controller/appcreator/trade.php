@@ -1106,8 +1106,11 @@ function checkout($conn,$db_prefix,$data)
     if ($query_token->num_rows == 1) {
         $user_id=$query_token->fetch_assoc()['user_id'];
          // var_dump(implode(',',$data['cart_items_ids']));die;
-        $cart=$conn->query("SELECT * From ".$db_prefix."cart WHERE customer_id='".(int)$user_id."' AND cart_id IN ('".implode(',',$data['cart_items_ids'])."')");
-          // var_dump($cart->fetch_assoc()['customer_id']);die;
+        $cart=$conn->query("SELECT * From ".$db_prefix."cart  
+            INNER JOIN ".$db_prefix."product ON ".$db_prefix."product.product_id = ".$db_prefix."cart.product_id
+            INNER JOIN ".$db_prefix."product_description ON ".$db_prefix."product_description.product_id = ".$db_prefix."cart.product_id
+            WHERE customer_id='".(int)$user_id."' AND cart_id IN ('".implode(',',$data['cart_items_ids'])."')");
+           // var_dump($cart);die;
         if( $cart->num_rows > 0  )
         {
             $user=$conn->query("SELECT * From ".$db_prefix."customer WHERE customer_id='".$user_id."'");
@@ -1119,6 +1122,11 @@ function checkout($conn,$db_prefix,$data)
             $order="INSERT INTO `" . $db_prefix . "order` SET invoice_prefix ='INV-2018-00', store_id = '" . $data['store_id'] . "', store_name = '" . $store['name'] . "', store_url = '" . $store['url'] . "', customer_id = '" . $data['customer_id'] . "', customer_group_id = '" . $customer['customer_group_id'] . "', firstname = '" . $customer['firstname'] . "', lastname = '" . $customer['lastname'] . "', email = '" . $customer['email'] . "', telephone = '" . $customer['telephone'] . "', custom_field = '" .$customer['custom_field']  . "', payment_firstname = '" . $customer['firstname']. "', payment_lastname = '" . $customer['lastname'] . "', payment_company = '', payment_address_1 = '', payment_address_2 = '', payment_city = '', payment_postcode = '', payment_country = '', payment_country_id = '', payment_zone = '', payment_zone_id = '', payment_address_format = '', payment_custom_field = 1 , payment_method = '" . $data['payment_method'] . "', payment_code = '', shipping_firstname = '', shipping_lastname = '', shipping_company = '', shipping_address_1 = '', shipping_address_2 = '', shipping_city = '', shipping_postcode = '', shipping_country = '', shipping_country_id = '', shipping_zone = '', shipping_zone_id = '', shipping_address_format = '', shipping_custom_field = 1, shipping_method = '', shipping_code = '', comment = '', total = '" . $data['total_price'] . "', language_id = '" . $customer['language_id'] . "', currency_code = '',  ip = '" . $customer['ip'] . "', forwarded_ip = '" .  $customer['forwarded_ip'] . "', date_added = NOW(), date_modified = NOW()";
             $conn->query($order);
             $checkout_id = $conn->insert_id;
+            $orders=mysqli_fetch_all($cart,MYSQLI_ASSOC);
+            foreach ($orders as $key => $value) {
+              $c=$conn->query("INSERT INTO ".$db_prefix."order_product SET order_id='".$checkout_id."' , product_id='".$value['product_id']."',name='".$value['name']."',model='".$value['model']."',quantity='".$value['quantity']."',price='".$value['price']."',total='".$value['price']*$value['quantity']."'");
+              // var_dump($c);die;
+            }
             $order_data = array("status" => array("code"=>200,"message"=>"success","error_details"=>array( "")), "content" => array(array("checkout_id"=>$checkout_id ,"user_name"=>$customer['firstname'],"total_price"=>$data['total_price'],"store"=>$store['name'])));
         return json_encode($order_data);
         }
