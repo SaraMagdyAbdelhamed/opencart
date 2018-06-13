@@ -44,7 +44,16 @@ function Product_List_View($conn, $db_prefix,$request) {
     $Final_Json = array();
     foreach ($Product_List as $product) 
     {
-        $temp['has_discount']=product_discount_list($conn,$db_prefix,$product['ID'] );
+        $temp['discount']=product_discount_list($conn,$db_prefix,$product['ID'] );
+        if(count($temp['discount']) > 0)
+        {
+            $temp['has_discount']=1;
+        }
+        else
+        {
+            $temp['has_discount']=0;
+        }
+        
         $temp['comment_list']=product_comment_list($conn,$db_prefix,$product['ID']);
         // return $temp['comment_list'][1]['rating'];
         $temp['id'] = $product['ID'];
@@ -148,7 +157,7 @@ function Product_List_View($conn, $db_prefix,$request) {
         //     $temp[$k] = $v;
         // }
 
-        $Arr_Json = Json_CData($temp,$temp['Data'],$temp['comment_list']);
+        $Arr_Json = Json_CData($temp,$temp['Data'],$temp['comment_list'],$temp['discount']);
         $Final_Json[] = $Arr_Json;
     }
     output($Final_Json);
@@ -779,6 +788,10 @@ $userdata = array("status" => array("code"=>2,"message"=>"error","error_details"
 }
  
 function signup($conn, $db_prefix,$request) {
+     if( validate($request))
+     {
+        return validate($request);
+     }
     if (isset($request['email']) && !empty($request['email']) && isset($request['password']) && !empty($request['password'])) {
         // $this->load->model('account/cutomer');
         // $customer = $ModelAccountCustomer->addCustomer($request);
@@ -1130,9 +1143,28 @@ function checkout($conn,$db_prefix,$data)
             $checkout_id = $conn->insert_id;
             $orders=mysqli_fetch_all($cart,MYSQLI_ASSOC);
             foreach ($orders as $key => $value) {
+                $has_discount=$conn->query("SELECT * FROM ".$db_prefix."product_discount WHERE product_id='".$value['product_id']."' AND date_start <= NOW() AND date_end >= NOW() ORDER BY priority ASC");
+                // var_dump($has_discount->num_rows );die;
+              if($has_discount->num_rows >0)
+              {
+                $discount=mysqli_fetch_all($has_discount,MYSQLI_ASSOC);
+                // foreach ($discount as $key1 => $value1) {
+                //     if($value['quantity'] == $value1['quantity'])
+                //     {
+                //         if($value1['priority']==1)
+                //         {
+                //             $value['price'] = $value1['price'];
+                //         }
+                //     }
+                // }
+                $value['price']=$discount[0]['price'];
+                // var_dump($value['price']);die;
+              }
               $c=$conn->query("INSERT INTO ".$db_prefix."order_product SET order_id='".$checkout_id."' , product_id='".$value['product_id']."',name='".$value['name']."',model='".$value['model']."',quantity='".$value['quantity']."',price='".$value['price']."',total='".$value['price']*$value['quantity']."'");
+
               // var_dump($c);die;
             }
+
             $order_data = array("status" => array("code"=>200,"message"=>"success","error_details"=>array( ),"validation_errors"=>array()), "content" => array(array("checkout_id"=>$checkout_id ,"user_name"=>$customer['firstname'],"total_price"=>$data['total_price'],"store"=>$store['name'])));
         return json_encode($order_data);
         }
@@ -2087,7 +2119,15 @@ function wishlist($conn,$db_prefix,$request)
                 foreach ($Product_List as $product) 
             {
                 $temp = array();
-                $temp['has_discount']=product_discount_list($conn,$db_prefix,$product['ID'] );
+                $temp['discount']=product_discount_list($conn,$db_prefix,$product['ID'] );
+        if(count($temp['discount']) > 0)
+        {
+            $temp['has_discount']=1;
+        }
+        else
+        {
+            $temp['has_discount']=0;
+        }
                 $temp['comment_list']=product_comment_list($conn,$db_prefix,$product['ID']);
                 // return $temp['comment_list'][1]['rating'];
                 $temp['id'] = $product['ID'];
@@ -2228,9 +2268,17 @@ function product_offers($conn,$db_prefix,$request)
             $rate = mysql_fetch_assoc($rate_avg);
         }
         $temp['rate']=$rate['rate'];
-        $temp['has_discount']=product_discount_list($conn,$db_prefix,$product['ID'] );
+       $temp['discount']=product_discount_list($conn,$db_prefix,$product['ID'] );
+        if(count($temp['discount']) > 0)
+        {
+            $temp['has_discount']=1;
+        }
+        else
+        {
+            $temp['has_discount']=0;
+        }
         $temp['comment_list']=product_comment_list($conn,$db_prefix,$product['ID']);
-        $discount = $conn->query("SELECT * FROM " . $db_prefix . "product_discount WHERE product_id = '$product[ID]'");
+        $discount = $conn->query("SELECT * FROM " . $db_prefix . "product_discount WHERE product_id = '$product[ID]'  AND date_start <= NOW() AND date_end >= NOW() ORDER BY priority ASC");
         if($discount->num_rows >0  )
         {
             $temp['id'] = $product['ID'];
@@ -2432,11 +2480,11 @@ function product_discount_list($conn,$db_prefix,$id )
 {
  $get_discount_list_on_product=$conn->query("SELECT *
     FROM ".$db_prefix."product_discount 
-    WHERE product_id='".$id."'");
-  if($get_discount_list_on_product->num_rows > 0)
-  {
-    return 1;
-  }
-  return 0;
+    WHERE product_id='".$id."' AND date_start <= NOW() AND date_end >= NOW() ORDER BY priority ASC");
+  // if($get_discount_list_on_product->num_rows > 0)
+  // {
+  //   return 1;
+  // }
+  return mysqli_fetch_all($get_discount_list_on_product, MYSQLI_ASSOC);
 }
 ?>
