@@ -39,9 +39,9 @@ $i++;
 }
 else
 {
-	$password = test_input($request["password"]);
+	$password = $request["password"];
     // check if e-mail address is well-formed
-    if (strlen($request["password"]) >= '3' && strlen($request["password"]) <= '8') {
+    if (strlen($request["password"]) < '3' && strlen($request["password"]) > '8') {
       $error[$i]=language_error("password_err" ,$lang );
 $validation_array[$i]['field']=language_field("email" , $lang);
 $validation_array[$i]['message']=language_error("password_err" , $lang); 

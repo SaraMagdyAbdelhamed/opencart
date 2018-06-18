@@ -1,6 +1,18 @@
 <?php
 require_once 'Base64ToImageService.php';
 require_once 'validation.php';
+
+if (!function_exists('getallheaders')) {
+    function getallheaders() {
+        $headers = [];
+        foreach ($_SERVER as $name => $value) {
+            if (substr($name, 0, 5) == 'HTTP_') {
+                $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
+            }
+        }
+        return $headers;
+    }
+}
 // require_once '../upload/model/account/cutomer.php';
 function json_encode_convert($outputs, $Key = "") {
     if (strstr($_SERVER['HTTP_USER_AGENT'], 'iPod') || strstr($_SERVER['HTTP_USER_AGENT'], 'iPhone') || strstr($_SERVER['HTTP_USER_AGENT'], 'iPad')) {
@@ -28,6 +40,10 @@ function Product_List_View($conn, $db_prefix,$request) {
     if(isset($request['lang_id']))
     {
         $sql .= " AND " . $db_prefix . "product_description.language_id='{$request['lang_id']}'";
+    }
+    else
+    {
+       $sql .= " AND " . $db_prefix . "product_description.language_id=1"; 
     }
     $sql .= " ORDER BY " . $db_prefix . "product.product_id DESC";
     if (DB_DRIVER == 'mysqli') {
@@ -91,6 +107,10 @@ function Product_List_View($conn, $db_prefix,$request) {
     {
         $q .= " AND " . $db_prefix . "attribute_description.language_id='{$request['lang_id']}'";
     }
+    else
+    {
+         $q .= " AND " . $db_prefix . "attribute_description.language_id=1";
+    }
         $t = array();
         if (DB_DRIVER == 'mysqli') {
             $data = $conn->query($q);
@@ -133,6 +153,10 @@ function Product_List_View($conn, $db_prefix,$request) {
     {
         $q_color .= " AND " . $db_prefix . "attribute_description.language_id='{$request['lang_id']}'";
     }
+    else
+    {
+        $q_color .= " AND " . $db_prefix . "attribute_description.language_id=1";
+    }
         if (DB_DRIVER == 'mysqli') {
             $color_res = $conn->query($q_color);
             $color = $color_res->fetch_assoc();
@@ -170,6 +194,10 @@ function Store_Depts($conn, $db_prefix,$request) {
     if(isset($request['lang_id']))
     {
         $wh .= " AND " . $db_prefix . "category_description.language_id='{$request['lang_id']}'";
+    }
+    else
+    {
+       $wh .= " AND " . $db_prefix . "category_description.language_id=1"; 
     }
     if (isset($request['ID']))
         $sql = "SELECT DISTINCT " . $db_prefix . "category.category_id as 'ID',name as 'Title',image as 'Pic',description as 'Des' FROM " . $db_prefix . "category INNER JOIN " . $db_prefix . "category_description ON " . $db_prefix . "category_description.category_id = " . $db_prefix . "category.category_id WHERE status=1 $wh AND " . $db_prefix . "category.category_id IN (SELECT category_id FROM " . $db_prefix . "category WHERE parent_id = '$request[ID]')";
@@ -232,6 +260,10 @@ function Store_Display($conn, $db_prefix, $product_id,$request) {
     {
         $sql .= " AND " . $db_prefix . "category_description.language_id='{$request['lang_id']}'";
     }
+    else
+    {
+       $sql .= " AND " . $db_prefix . "category_description.language_id=1"; 
+    }
     
     $u = "UPDATE " . $db_prefix . "product SELECT viewed = viewed+1 WHERE product_id='$request[ID]'";
     if (DB_DRIVER == 'mysqli') {
@@ -253,6 +285,10 @@ function Store_Display($conn, $db_prefix, $product_id,$request) {
     if(isset($request['lang_id']))
     {
         $q .= " AND " . $db_prefix . "category_description.language_id='{$request['lang_id']}'";
+    }
+    else
+    {
+      $q .= " AND " . $db_prefix . "category_description.language_id=1";  
     }
     
     if (DB_DRIVER == 'mysqli') {
@@ -316,6 +352,10 @@ function Store_Display($conn, $db_prefix, $product_id,$request) {
     {
         $q_color .= " AND " . $db_prefix . "attribute_description.language_id='{$request['lang_id']}'";
     }
+    else
+    {
+       $q_color .= " AND " . $db_prefix . "attribute_description.language_id=1"; 
+    }
     if (DB_DRIVER == 'mysqli') {
         $color_res = $conn->query($q_color);
         $color = $color_res->fetch_assoc();
@@ -358,6 +398,10 @@ function Store_Product($conn, $db_prefix,$request) {
     {
         $sql .= " AND " . $db_prefix . "product_description.language_id='{$request['lang_id']}'";
     }
+    else
+    {
+       $sql .= " AND " . $db_prefix . "product_description.language_id=1"; 
+    }
     
     $sql .= " ORDER BY " . $db_prefix . "product.product_id DESC";
     if (DB_DRIVER == 'mysqli') {
@@ -396,6 +440,10 @@ function Store_Product($conn, $db_prefix,$request) {
         if(isset($request['lang_id']))
     {
         $sql .= " AND " . $db_prefix . "attribute_description.language_id='{$request['lang_id']}'";
+    }
+    else
+    {
+        $sql .= " AND " . $db_prefix . "attribute_description.language_id=1";
     }
         
         $t = array();
@@ -553,6 +601,10 @@ function Store_View($conn, $db_prefix,$request) {
     {
         $sql .= " AND " . $db_prefix . "product_description.language_id='{$request['lang_id']}'";
     }
+    else
+    {
+       $sql .= " AND " . $db_prefix . "product_description.language_id=1"; 
+    }
     
     $sql .= " ORDER BY " . $db_prefix . "product.product_id DESC";
     if (DB_DRIVER == 'mysqli') {
@@ -592,6 +644,10 @@ function Store_View($conn, $db_prefix,$request) {
         if(isset($request['lang_id']))
     {
         $q .= " AND " . $db_prefix . "attribute_description.language_id='{$request['lang_id']}'";
+    }
+    else
+    {
+       $q .= " AND " . $db_prefix . "attribute_description.language_id=1"; 
     }
         
         $t = array();
@@ -916,7 +972,7 @@ function profile($conn, $db_prefix,$request) {
     // session_start();
       // echo ($session);exit();
     // $userData = $_SESSION['userData'];
-     // var_dump(getallheaders()["access-token"]);die;
+      // var_dump(getallheaders());die;
     $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_token='".getallheaders()["access-token"]."'");
     if ($query_token->num_rows == 1) {
         // return $query_token->fetch_assoc()['user_id'];
@@ -1125,7 +1181,7 @@ function checkout($conn,$db_prefix,$data)
     if ($query_token->num_rows == 1) {
         $user_id=$query_token->fetch_assoc()['user_id'];
          // var_dump(implode(',',$data['cart_items_ids']));die;
-        $cart=$conn->query("SELECT * From ".$db_prefix."cart  
+        $cart=$conn->query("SELECT ".$db_prefix."product.product_id as 'product_id' , ".$db_prefix."product.price as 'price' ,".$db_prefix."product.model as 'model' ,".$db_prefix."product_description.name as 'name' ,".$db_prefix."cart.quantity as 'quantity' From ".$db_prefix."cart  
             INNER JOIN ".$db_prefix."product ON ".$db_prefix."product.product_id = ".$db_prefix."cart.product_id
             INNER JOIN ".$db_prefix."product_description ON ".$db_prefix."product_description.product_id = ".$db_prefix."cart.product_id
             WHERE customer_id='".(int)$user_id."' AND cart_id IN ('".implode(',',$data['cart_items_ids'])."')");
@@ -1148,16 +1204,13 @@ function checkout($conn,$db_prefix,$data)
               if($has_discount->num_rows >0)
               {
                 $discount=mysqli_fetch_all($has_discount,MYSQLI_ASSOC);
-                // foreach ($discount as $key1 => $value1) {
-                //     if($value['quantity'] == $value1['quantity'])
-                //     {
-                //         if($value1['priority']==1)
-                //         {
-                //             $value['price'] = $value1['price'];
-                //         }
-                //     }
-                // }
-                $value['price']=$discount[0]['price'];
+                foreach ($discount as $key1 => $value1) {
+                    if($value['quantity'] == $value1['quantity'])
+                    {
+                      $value['price']=$value1['price'];
+                    }
+                }
+                // $value['price']=$discount[0]['price'];
                 // var_dump($value['price']);die;
               }
               $c=$conn->query("INSERT INTO ".$db_prefix."order_product SET order_id='".$checkout_id."' , product_id='".$value['product_id']."',name='".$value['name']."',model='".$value['model']."',quantity='".$value['quantity']."',price='".$value['price']."',total='".$value['price']*$value['quantity']."'");
@@ -1372,6 +1425,8 @@ function Json_Others_Data($output,$Others_Data) {
 
     $array['key']='keyvalue';
     $array['group_name']="Key Value Fields";
+    if(count($Others_Data) > 0 || isset($output['price']) || isset($output['rate']) || isset($output['price_currency']) || isset($output['has_discount']) || $output['has_sub'])
+{
     if(count($Others_Data) > 0 )
     {
     //      if(isset($output['price']))
@@ -1402,13 +1457,18 @@ function Json_Others_Data($output,$Others_Data) {
     }
      if(isset($output['has_discount']))
     {
-        $array['value'][]=array("id"=>'',"parameter"=>"has_offer","name"=>'has_offer',"value"=>array("value_type"=>"normal","value_string"=>$output['has_discount']),"dkv_id"=>"","title"=>"","des"=>"","setting_id"=>"");
+        $array['value'][]=array("id"=>'',"parameter"=>"has_discount","name"=>'has_discount',"value"=>array("value_type"=>"normal","value_string"=>$output['has_discount']),"dkv_id"=>"","title"=>"","des"=>"","setting_id"=>"");
     }
     if(isset($output['has_sub']))
     {
         $array['value'][]=array("id"=>'',"parameter"=>"has_sub_categories","name"=>'has_sub_categories',"value"=>array("value_type"=>"normal","value_string"=>$output['has_sub']),"dkv_id"=>"","title"=>"","des"=>"","setting_id"=>"");
     }
-        // $array['value']=array(array("id"=>0,"parameter"=>"","name"=>"","value"=>array("value_type"=>"normal","value_string"=>""),"dkv_id"=>"","title"=>"","des"=>"","setting_id"=>""));
+}
+else
+{
+    
+        $array['value']=array(array("id"=>0,"parameter"=>"","name"=>"","value"=>array("value_type"=>"normal","value_string"=>""),"dkv_id"=>"","title"=>"","des"=>"","setting_id"=>""));
+}
     
     
     // $array['value']=array(array("id"=>1,"parameter"=>"","name"=>"","value"=>array("value_type"=>"","value_string"=>""),"dkv_id"=>"","title"=>"","des"=>"","setting_id"=>""));
@@ -1795,6 +1855,10 @@ function Category_Product($conn,$db_prefix,$request)
     {
         $sql .= " AND " . $db_prefix . "category_description.language_id='{$request['lang_id']}'";
     }
+    else
+    {
+       $sql .= " AND " . $db_prefix . "category_description.language_id=1"; 
+    }
     $sql .= " ORDER BY " . $db_prefix . "category.category_id DESC";
     if (DB_DRIVER == 'mysqli') {
         $Categories = $conn->query($sql);
@@ -1930,6 +1994,10 @@ function information($conn,$db_prefix,$request)
     if(isset($request['lang_id']))
     {
         $sql .= " AND language_id='{$request['lang_id']}'";
+    }
+    else
+    {
+        $sql .= " AND language_id=1";
     }
     
     
@@ -2155,6 +2223,10 @@ function wishlist($conn,$db_prefix,$request)
             {
                 $q .= " AND " . $db_prefix . "attribute_description.language_id='{$request['lang_id']}'";
             }
+            else
+            {
+                $q .= " AND " . $db_prefix . "attribute_description.language_id=1";
+            }
                 $t = array();
                 if (DB_DRIVER == 'mysqli') {
                     $data = $conn->query($q);
@@ -2308,6 +2380,10 @@ function product_offers($conn,$db_prefix,$request)
         if(isset($request['lang_id']))
     {
         $q .= " AND " . $db_prefix . "attribute_description.language_id='{$request['lang_id']}'";
+    }
+    else
+    {
+       $q .= " AND " . $db_prefix . "attribute_description.language_id=1"; 
     }
         $t = array();
         if (DB_DRIVER == 'mysqli') {
