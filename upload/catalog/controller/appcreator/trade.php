@@ -916,6 +916,10 @@ function signup($conn, $db_prefix,$request) {
 function edit_profile($conn,$db_prefix,$request)
  {
     // return getallheaders()["access-token"];
+    if( validate_profile($request))
+     {
+        return validate_profile($request);
+     }
     $query_token = $conn->query("SELECT * FROM ". $db_prefix ."api_tokens WHERE api_token='".getallheaders()["access-token"]."'");
     if ($query_token->num_rows == 1) 
     {
